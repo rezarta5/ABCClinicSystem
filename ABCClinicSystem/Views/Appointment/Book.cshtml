@@ -1,0 +1,72 @@
+﻿@model ABCClinicSystem.Models.Appointment
+
+<h2>Book Appointment</h2>
+
+@if (TempData["Errors"] != null)
+{
+    <div class="alert alert-danger">@TempData["Errors"]</div>
+}
+
+<form asp-action="Book" method="post">
+    @Html.AntiForgeryToken()
+
+    <!-- Doctor dropdown -->
+    <div class="form-group">
+        <label asp-for="DoctorId" class="form-label"></label>
+        <select asp-for="DoctorId" asp-items="Model.Doctors" class="form-control" required>
+            <option value="">-- Select Doctor --</option>
+        </select>
+        <span asp-validation-for="DoctorId" class="text-danger"></span>
+    </div>
+
+    <!-- Patient dropdown or hidden for Patient role -->
+    <div class="form-group">
+        <label asp-for="PatientId" class="form-label"></label>
+        @if (User.IsInRole("Patient"))
+        {
+            <!-- Patient cannot change this, hidden input -->
+            <input type="hidden" asp-for="PatientId" value="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" />
+            <input class="form-control" value="@User.Identity.Name" disabled />
+        }
+        else
+        {
+            <!-- Admin or Doctor can select patient -->
+            <select asp-for="PatientId" asp-items="Model.Patients" class="form-control" required>
+                <option value="">-- Select Patient --</option>
+            </select>
+        }
+        <span asp-validation-for="PatientId" class="text-danger"></span>
+    </div>
+
+    <!-- Appointment date/time -->
+    <div class="form-group">
+        <label asp-for="AppointmentDate" class="form-label"></label>
+        <input asp-for="AppointmentDate" type="datetime-local" class="form-control"
+               value="@Model.AppointmentDate.ToString("yyyy-MM-ddTHH:mm")" required />
+        <span asp-validation-for="AppointmentDate" class="text-danger"></span>
+    </div>
+
+    <!-- Appointment Type -->
+    <div class="form-group">
+        <label asp-for="AppointmentType" class="form-label"></label>
+        <select asp-for="AppointmentType" asp-items="Model.AppointmentTypes" class="form-control" required></select>
+        <span asp-validation-for="AppointmentType" class="text-danger"></span>
+    </div>
+
+    <!-- Reason -->
+    <div class="form-group">
+        <label asp-for="Reason" class="form-label"></label>
+        <textarea asp-for="Reason" class="form-control"></textarea>
+    </div>
+
+    <br />
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Save Appointment</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+}

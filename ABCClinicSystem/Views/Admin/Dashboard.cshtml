@@ -1,0 +1,46 @@
+﻿@model ABCClinicSystem.Models.Admin
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<h1 class="text-primary">Admin Dashboard</h1>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-info text-white p-3 mb-3">
+            <h5>Total Users</h5>
+            <p>@Model.TotalUsers</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white p-3 mb-3">
+            <h5>Total Doctors</h5>
+            <p>@Model.TotalDoctors</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white p-3 mb-3">
+            <h5>Total Patients</h5>
+            <p>@Model.TotalPatients</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white p-3 mb-3">
+            <h5>Total Appointments</h5>
+            <p>@Model.TotalAppointments</p>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a asp-controller="Admin" asp-action="Users" class="btn btn-primary me-2">
+        Manage Users
+    </a>
+    <a asp-controller="Admin" asp-action="Appointments" class="btn btn-success me-2">
+        Manage Appointments
+    </a>
+    <a asp-controller="Admin" asp-action="MedicalRecords" class="btn btn-warning">
+        Manage Medical Records
+    </a>
+</div>

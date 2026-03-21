@@ -1,0 +1,91 @@
+﻿@{
+    ViewData["Title"] = "Doctor Dashboard";
+}
+
+<h2 class="mb-4 text-primary" xmlns="http://www.w3.org/1999/html">Doctor Dashboard</h2>
+
+<!-- Success Message -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill"></i>
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="mb-4">
+    <p class="lead">Welcome, <strong>@ViewBag.FullName</strong></p>
+</div>
+
+<div class="row mb-4">
+    <!-- Summary Cards -->
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Total Appointments</h5>
+                <p class="card-text fs-4">@ViewBag.TotalAppointments ?? 0</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Upcoming Appointments</h5>
+                <p class="card-text fs-4">@((ViewBag.UpcomingAppointments != null) ? ViewBag.UpcomingAppointments.Count : 0)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-white bg-info mb-3 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Quick Actions</h5>
+                <a asp-controller="Appointment" asp-action="Book" class="btn btn-light btn-sm mb-1">Book Appointment</a>
+                <a asp-controller="Doctor" asp-action="MedicalRecords" class="btn btn-light btn-sm mb-1">View Medical Records</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4 class="mb-3">Upcoming Appointments</h4>
+@if (ViewBag.UpcomingAppointments != null && ViewBag.UpcomingAppointments.Count > 0)
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Patient</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var appt in ViewBag.UpcomingAppointments)
+                {
+                    <tr>
+                        <td>@appt.Patient?.FullName</td>
+                        <td>@appt.AppointmentDate.ToLocalTime().ToString("dd MMM yyyy")</td>
+                        <td>@appt.AppointmentDate.ToLocalTime().ToString("HH:mm")</td>
+                        <td>
+                            <span class="badge bg-warning text-dark">@appt.Status</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No upcoming appointments.
+    </div>
+}
+
+<div class="mt-4">
+    <a asp-controller="Appointment" asp-action="Index" class="btn btn-primary me-2">All Appointments</a>
+    <a asp-controller="MedicalRecord" asp-action="Index" class="btn btn-success">Medical Records</a>
+</div>

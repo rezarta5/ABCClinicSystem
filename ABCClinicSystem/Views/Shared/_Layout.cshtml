@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ABCClinicSystem</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ABCClinicSystem.styles.css" asp-append-version="true" />
+    <style>
+        .navbar-custom {
+            background-color: #0D3B66;
+        }
+        .navbar-custom .nav-link, 
+        .navbar-custom .navbar-brand {
+            color: #F0F0F0;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #FFD166;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
+            <div class="container-fluid">
+
+                <!-- Brand -->
+                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">ABCClinicSystem</a>
+
+                <!-- Toggler -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Appointment" asp-action="Index">Appointments</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="MedicalRecord" asp-action="Index">Medical Records</a></li>
+
+                        @* Role dashboards *@
+                        @if (User.Identity?.IsAuthenticated ?? false)
+                        {
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item"><a class="nav-link fw-bold text-warning" asp-controller="Admin" asp-action="Dashboard">Admin Dashboard</a></li>
+                            }
+                            @if (User.IsInRole("Doctor"))
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-controller="Doctor" asp-action="Dashboard">Doctor Dashboard</a></li>
+                            }
+                            @if (User.IsInRole("Manager"))
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-controller="Manager" asp-action="Dashboard">Manager Dashboard</a></li>
+                            }
+                            @if (User.IsInRole("Patient"))
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-controller="Patient" asp-action="Dashboard">My Dashboard</a></li>
+                            }
+                        }
+
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
+                    </ul>
+
+                    @* Top-right: only Logout *@
+                    <ul class="navbar-nav ms-auto">
+                        @if (User.Identity?.IsAuthenticated ?? false)
+                        {
+                            <li class="nav-item">
+                                <form method="post" asp-area="Identity" asp-page="/Account/Logout" id="logoutForm" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item"><a class="nav-link text-light" asp-area="Identity" asp-page="/Account/Register">Register</a></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container mt-4">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted mt-4">
+        <div class="container">&copy; 2026 - ABCClinicSystem</div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+

@@ -1,0 +1,45 @@
+﻿@model List<ABCClinicSystem.Models.Appointment>
+
+@{
+    ViewData["Title"] = "Manage Appointments";
+}
+
+<h1 class="text-primary">Manage Appointments</h1>
+
+<table class="table table-bordered mt-3 table-hover">
+    <thead class="table-light">
+    <tr>
+        <th>Patient</th>
+        <th>Doctor</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Reason</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var appt in Model)
+    {
+        <tr>
+            <td>@appt.Patient?.FullName</td>
+            <td>@appt.Doctor?.FullName</td>
+            <td>@appt.AppointmentDate.ToShortDateString()</td>
+            <td>@appt.AppointmentDate.ToString("HH:mm")</td>
+            <td>@appt.Reason</td>
+            <td>@appt.AppointmentType</td>
+            <td>@appt.Status</td>
+            <td>
+                <a asp-action="EditAppointment" asp-route-id="@appt.Id" class="btn btn-sm btn-warning me-1">
+                    Edit
+                </a>
+                <form asp-action="DeleteAppointment" asp-route-id="@appt.Id" method="post" class="d-inline"
+                      onsubmit="return confirm('Are you sure you want to delete this appointment?');">
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

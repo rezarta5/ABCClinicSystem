@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>aspnet-ABCClinicSystem-ec707bc7-39e8-48cd-bb6c-95d2aa579ddd</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Core ASP.NET packages -->
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.23" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.23" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.23" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.23" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.23" />
+
+        <!-- Code generation -->
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.23" />
+
+        <!-- Database providers -->
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.2" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.Design" Version="1.1.0" />
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="Data\Migrations\" />
+        <Folder Include="Migrations\" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <_ContentIncludedByDefault Remove="Areas\Account\Login.cshtml" />
+        <_ContentIncludedByDefault Remove="Areas\Identity\Pages\Account\Login.cshtml" />
+        <_ContentIncludedByDefault Remove="Views\Appointment\Create.cshtml" />
+        <_ContentIncludedByDefault Remove="Views\Appointment\Edit.cshtml" />
+     
+    </ItemGroup>
+
+</Project>

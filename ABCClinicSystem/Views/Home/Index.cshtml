@@ -1,0 +1,131 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<!-- Hero Section -->
+<section class="text-white text-center py-5 mb-5" style="background-color: #0D3B66;">
+    <div class="container">
+        <h1 class="display-4 fw-bold">Welcome to ABCClinicSystem</h1>
+        <p class="lead">Prioritize your health and manage your appointments and medical records easily.</p>
+        @* Removed Get Started and Login buttons here *@
+    </div>
+</section>
+
+
+<!-- Feature Cards Section -->
+<section class="container mb-5">
+    <div class="row text-center">
+
+        <!-- Appointments Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm" style="background-color: #F0F0F0;">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-primary">Appointments</h5>
+                    <p class="card-text text-dark">Schedule and manage patient appointments efficiently.</p>
+                    <a asp-controller="Appointment" asp-action="Index" class="btn" style="background-color: #00A896; color: white;">View Appointments</a>
+                </div>
+            </div>
+        </div>
+
+        
+        <!-- Medical Records Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm" style="background-color: #F0F0F0;">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-primary">Medical Records</h5>
+                    <p class="card-text text-dark">Access and manage patient medical history securely.</p>
+
+                    @if (User.Identity?.IsAuthenticated ?? false)
+                    {
+                        <!-- Show View Records button if logged in -->
+                        <a asp-controller="MedicalRecord" asp-action="Index" class="btn" style="background-color: #00A896; color: white;">
+                            View Records
+                        </a>
+                    }
+                    else
+                    {
+                        <!-- Show Login button if not logged in -->
+                        <a asp-area="Identity" asp-page="/Account/Login" class="btn" style="background-color: #00A896; color: white;">
+                            Login to View Records
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+        
+
+        <!-- Dashboard Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm" style="background-color: #F0F0F0;">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-primary">Dashboard</h5>
+                    <p class="card-text text-dark">Go to your role dashboard to manage operations.</p>
+
+                    @if (User.Identity?.IsAuthenticated ?? false)
+                    {
+                        @* Role-based dashboard buttons *@
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-controller="Admin" asp-action="Dashboard" class="btn" style="background-color: #FFC857; color: #0D3B66;">Admin Dashboard</a>
+                        }
+                        else if (User.IsInRole("Doctor"))
+                        {
+                            <a asp-controller="Doctor" asp-action="Dashboard" class="btn" style="background-color: #0D3B66; color: white;">Doctor Dashboard</a>
+                        }
+                        else if (User.IsInRole("Manager"))
+                        {
+                            <a asp-controller="Manager" asp-action="Dashboard" class="btn" style="background-color: #00A896; color: white;">Manager Dashboard</a>
+                        }
+                        else if (User.IsInRole("Patient"))
+                        {
+                            <a asp-controller="Patient" asp-action="Dashboard" class="btn" style="background-color: #6A6A6A; color: white;">My Dashboard</a>
+                        }
+                    }
+                    else
+                    {
+                        @* Login button for non-authenticated users styled like other buttons *@
+                        <a asp-area="Identity" asp-page="/Account/Login" 
+                           class="btn" 
+                           style="background-color: #00A896; color: white;">
+                            Login
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+
+<!-- Why Choose Us Section -->
+<section class="py-5 mb-5" style="background-color: #E5E5E5;">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-4" style="color: #0D3B66;">Why Choose ABCClinicSystem?</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="mb-2 display-6 text-primary">👩‍⚕️</div>
+                <h5 class="fw-bold text-dark">Patient-Centered Care</h5>
+                <p class="text-dark">We prioritize your health and listen to your needs before recommending next steps.</p>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="mb-2 display-6 text-primary">🩺</div>
+                <h5 class="fw-bold text-dark">Skilled Providers</h5>
+                <p class="text-dark">Our team of doctors and staff provide professional and collaborative care.</p>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="mb-2 display-6 text-primary">🔒</div>
+                <h5 class="fw-bold text-dark">Trusted & Secure</h5>
+                <p class="text-dark">We maintain confidentiality and provide reliable, easy-to-use services.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="py-3 text-center" style="background-color: #0D3B66; color: white;">
+    <div class="container">
+        &copy; 2026 - ABCClinicSystem
+    </div>
+</footer>

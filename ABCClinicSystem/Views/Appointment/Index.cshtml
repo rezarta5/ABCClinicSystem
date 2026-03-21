@@ -1,0 +1,48 @@
+﻿@model List<ABCClinicSystem.Models.Appointment>
+
+@{
+    ViewData["Title"] = "Appointments";
+}
+
+<h1 class="text-primary">Appointments</h1>
+
+<!-- ✅ Success Message -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<!-- Book Appointment Button -->
+@if (User.Identity?.IsAuthenticated ?? false)
+{
+    <a asp-controller="Appointment" asp-action="Book" class="btn btn-success mb-3">Book Appointment</a>
+}
+
+<table class="table table-bordered mt-3">
+    <thead>
+    <tr>
+        <th>Patient</th>
+        <th>Doctor</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Reason</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var appt in Model)
+    {
+        <tr>
+            <td>@appt.Patient?.FullName</td>
+            <td>@appt.Doctor?.FullName</td>
+            <td>@appt.AppointmentDate.ToShortDateString()</td>
+            <td>@appt.AppointmentDate.ToString("HH:mm")</td>
+            <td>@appt.Reason</td>
+            <td>
+                <a asp-controller="Appointment" asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-warning btn-sm">Edit</a>
+                <a asp-controller="Appointment" asp-action="Delete" asp-route-id="@appt.Id" class="btn btn-danger btn-sm">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

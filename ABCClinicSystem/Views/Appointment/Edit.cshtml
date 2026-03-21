@@ -1,0 +1,60 @@
+﻿@model ABCClinicSystem.Models.Appointment
+@{
+    ViewData["Title"] = "Edit Appointment";
+}
+
+<h1 class="text-warning">Edit Appointment</h1>
+
+@if (TempData["Errors"] != null)
+{
+    <div class="alert alert-danger">@TempData["Errors"]</div>
+}
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="DoctorId" class="form-label"></label>
+        <select asp-for="DoctorId" asp-items="Model.Doctors" class="form-select">
+            <option value="">-- Select Doctor --</option>
+        </select>
+        <span asp-validation-for="DoctorId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="PatientId" class="form-label"></label>
+        <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
+            <option value="">-- Select Patient --</option>
+        </select>
+        <span asp-validation-for="PatientId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="AppointmentDate" class="form-label"></label>
+        <input asp-for="AppointmentDate" type="datetime-local" class="form-control"
+               value="@Model.AppointmentDate.ToString("yyyy-MM-ddTHH:mm")" />
+        <span asp-validation-for="AppointmentDate" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="AppointmentType" class="form-label"></label>
+        <select asp-for="AppointmentType" asp-items="Model.AppointmentTypes" class="form-select"></select>
+        <span asp-validation-for="AppointmentType" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Reason" class="form-label"></label>
+        <textarea asp-for="Reason" class="form-control"></textarea>
+    </div>
+
+    <br />
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-warning">Save Changes</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+}
