@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using ABCClinicSystem.Models;
 
+
 namespace ABCClinicSystem.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
@@ -14,5 +15,8 @@ namespace ABCClinicSystem.Data
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<MedicalRecord> MedicalRecords { get; set; }
         public DbSet<DoctorSchedule> DoctorSchedules { get; set; } // keep only this
+        public DbSet<Bill> Bills { get; set; }
+        public DbSet<ServiceDepartment> ServiceDepartments { get; set; }
+        public DbSet<Service> Services { get; set; }
     }
 }

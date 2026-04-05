@@ -2,76 +2,203 @@
     ViewData["Title"] = "Doctor Dashboard";
 }
 
-<h2 class="mb-4 text-primary" xmlns="http://www.w3.org/1999/html">Doctor Dashboard</h2>
+<div class="container py-5">
 
-<!-- Success Message -->
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill"></i>
-        @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <!-- Header / Welcome -->
+    <h2 class="mb-4 text-primary fw-bold">Doctor Dashboard</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="mb-4">
+        <p class="lead">Welcome, <strong>@ViewBag.FullName</strong></p>
     </div>
-}
 
-<div class="mb-4">
-    <p class="lead">Welcome, <strong>@ViewBag.FullName</strong></p>
-</div>
-
-<div class="row mb-4">
     <!-- Summary Cards -->
-    <div class="col-md-4">
-        <div class="card text-white bg-primary mb-3 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Total Appointments</h5>
-                <p class="card-text fs-4">@ViewBag.TotalAppointments ?? 0</p>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center h-100 border-primary">
+                <div class="card-body">
+                    <h6 class="card-title text-primary fw-bold">Total Appointments</h6>
+                    <p class="display-6 mb-0">@((ViewBag.TotalAppointments ?? 0))</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center h-100 border-success">
+                <div class="card-body">
+                    <h6 class="card-title text-success fw-bold">Upcoming Appointments</h6>
+                    <p class="display-6 mb-0">@((ViewBag.UpcomingAppointments != null) ? ViewBag.UpcomingAppointments.Count : 0)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center h-100 border-info">
+                <div class="card-body">
+                    <h6 class="card-title text-info fw-bold">Today's Appointments</h6>
+                    <p class="display-6 mb-0">@((ViewBag.TodaysAppointments != null) ? ViewBag.TodaysAppointments.Count : 0)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center h-100 border-warning">
+                <div class="card-body">
+                    <h6 class="card-title text-warning fw-bold">Recent Medical Records</h6>
+                    <p class="display-6 mb-0">@((ViewBag.RecentMedicalRecords != null) ? ViewBag.RecentMedicalRecords.Count : 0)</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card text-white bg-success mb-3 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Upcoming Appointments</h5>
-                <p class="card-text fs-4">@((ViewBag.UpcomingAppointments != null) ? ViewBag.UpcomingAppointments.Count : 0)</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="card text-white bg-info mb-3 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Quick Actions</h5>
-                <a asp-controller="Appointment" asp-action="Book" class="btn btn-light btn-sm mb-1">Book Appointment</a>
-                <a asp-controller="Doctor" asp-action="MedicalRecords" class="btn btn-light btn-sm mb-1">View Medical Records</a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<h4 class="mb-3">Upcoming Appointments</h4>
-@if (ViewBag.UpcomingAppointments != null && ViewBag.UpcomingAppointments.Count > 0)
-{
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered">
-            <thead class="table-dark">
-                <tr>
-                    <th>Patient</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
+    <!-- Upcoming Appointments Table -->
+    <h4 class="fw-bold text-primary mt-5 mb-3">Upcoming Appointments</h4>
+    @if (ViewBag.UpcomingAppointments != null && ViewBag.UpcomingAppointments.Count > 0)
+    {
+        <div class="table-responsive mb-4">
+            <table class="table table-striped table-hover table-bordered shadow-sm align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Patient</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
                 @foreach (var appt in ViewBag.UpcomingAppointments)
                 {
                     <tr>
-                        <td>@appt.Patient?.FullName</td>
+                        <td>@appt.Patient.FullName</td>
                         <td>@appt.AppointmentDate.ToLocalTime().ToString("dd MMM yyyy")</td>
                         <td>@appt.AppointmentDate.ToLocalTime().ToString("HH:mm")</td>
                         <td>
-                            <span class="badge bg-warning text-dark">@appt.Status</span>
+                            <span class="badge @(appt.Status == "Scheduled" ? "bg-warning text-dark" :
+                                               appt.Status == "Completed" ? "bg-success" :
+                                               appt.Status == "Cancelled" ? "bg-danger" : "bg-secondary")">
+                                @appt.Status
+                            </span>
                         </td>
+                        <td>
+                            @* Status Update Form *@
+                            <form asp-controller="Doctor" asp-action="UpdateAppointmentStatus" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@appt.Id" />
+
+                                @{
+                                    string Selected(string value) => appt.Status == value ? "selected" : "";
+                                }
+
+                                <select name="status" class="form-select form-select-sm d-inline w-auto">
+                                    <option value="" disabled>Change Status</option>
+                                    <option value="Scheduled" selected="@Selected("Scheduled")">Scheduled</option>
+                                    <option value="Completed" selected="@Selected("Completed")">Completed</option>
+                                    <option value="Cancelled" selected="@Selected("Cancelled")">Cancelled</option>
+                                </select>
+
+                                <button type="submit" class="btn btn-sm btn-primary ms-1">Update</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+        
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle"></i> No upcoming appointments.
+        </div>
+    }
+
+    <!-- Recent Medical Records Table -->
+    <h4 class="fw-bold text-success mt-5 mb-3">Recent Medical Records</h4>
+    @if (ViewBag.RecentMedicalRecords != null && ViewBag.RecentMedicalRecords.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-bordered shadow-sm align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Patient</th>
+                        <th>Diagnosis</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var record in ViewBag.RecentMedicalRecords)
+                    {
+                        <tr>
+                            <td>@record.Patient.FullName</td>
+                            <td>@record.Diagnosis</td>
+                            <td>@record.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No recent medical records.
+        </div>
+    }
+    
+    
+    <h4 class="fw-bold text-warning mt-5 mb-3">All Bills</h4>
+
+@if (ViewBag.Bills != null && ViewBag.Bills.Count > 0)
+{
+    <div class="table-responsive mb-4">
+        <table class="table table-striped table-hover table-bordered shadow-sm align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Patient</th>
+                    <th>Amount ($)</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bill in ViewBag.Bills)
+                {
+                    <tr>
+                        <td>@bill.Patient.FullName</td>
+                        <td>@bill.Amount.ToString("F2")</td>
+                        <td>@bill.DueDate?.ToString("dd MMM yyyy")</td>
+                        <td>
+                            <span class="badge @(bill.Status == "Pending" ? "bg-warning text-dark" : "bg-success")">
+                                @bill.Status
+                            </span>
+                        </td>
+                        <td>
+                            <td>
+                                <!-- Update Status Form -->
+                                <form asp-action="UpdateBillStatus" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@bill.Id" />
+                                    <select name="status" class="form-select form-select-sm d-inline w-auto">
+                                        <option selected disabled>Change Status</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Paid">Paid</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-primary ms-1">Update</button>
+                                </form>
+
+                                <!-- Delete Bill Form -->
+                                <form asp-action="DeleteBill" method="post" class="d-inline ms-1" onsubmit="return confirm('Are you sure you want to delete this bill?');">
+                                    <input type="hidden" name="id" value="@bill.Id" />
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </td>
                     </tr>
                 }
             </tbody>
@@ -80,12 +207,21 @@
 }
 else
 {
-    <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i> No upcoming appointments.
+    <div class="alert alert-info mb-4">
+        <i class="bi bi-info-circle"></i> No bills found.
     </div>
 }
 
-<div class="mt-4">
-    <a asp-controller="Appointment" asp-action="Index" class="btn btn-primary me-2">All Appointments</a>
-    <a asp-controller="MedicalRecord" asp-action="Index" class="btn btn-success">Medical Records</a>
+    <!-- Bottom Navigation / Quick Links -->
+    <div class="mt-4 d-flex flex-wrap gap-2">
+        <a asp-controller="Appointment" asp-action="Index" class="btn btn-primary shadow-sm"><i class="bi bi-calendar2-check me-1"></i> All Appointments</a>
+        <a asp-controller="MedicalRecord" asp-action="Index" class="btn btn-success shadow-sm"><i class="bi bi-file-medical-fill me-1"></i> All Medical Records</a>
+        <!-- Add Create Bill Button -->
+        <a asp-controller="Doctor" asp-action="CreateBill" class="btn btn-warning shadow-sm">
+            <i class="bi bi-plus-circle me-1"></i> Create Bill
+        </a>
+        
+    </div>
+    
+    
 </div>

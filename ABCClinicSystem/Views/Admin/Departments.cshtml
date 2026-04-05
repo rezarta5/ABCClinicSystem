@@ -1,0 +1,141 @@
+﻿@model List<ABCClinicSystem.Models.ServiceDepartment>
+
+<h2 class="mb-4">Manage Departments & Services</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row mb-4">
+    <!-- Department Form -->
+<div class="col-md-6 mb-3">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            Add / Edit Department
+        </div>
+        <div class="card-body">
+            <form asp-action="SaveDepartment" method="post">
+                <input type="hidden" name="Id" value="0" id="DepartmentId" />
+                <div class="mb-2">
+                    <input type="text" name="Name" class="form-control" placeholder="Department Name" id="DepartmentName" required />
+                </div>
+                <div class="mb-2">
+                    <textarea name="Description" class="form-control" placeholder="Description"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Save Department</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Service Form -->
+<div class="col-md-6 mb-3">
+    <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+            Add / Edit Service
+        </div>
+        <div class="card-body">
+            <form asp-action="SaveService" method="post">
+                <input type="hidden" name="Id" value="0" id="ServiceId" />
+                <div class="mb-2">
+                    <input type="text" name="Name" class="form-control" placeholder="Service Name" id="ServiceName" required />
+                </div>
+                <div class="mb-2">
+                    <select name="ServiceDepartmentId" class="form-select" id="ServiceDepartmentSelect" required>
+                        <option value="">-- Select Department --</option>
+                        @foreach (var dept in Model)
+                        {
+                            <option value="@dept.Id">@dept.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <textarea name="Description" class="form-control" placeholder="Description"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success btn-sm">Save Service</button>
+            </form>
+        </div>
+    </div>
+</div>
+        </div>
+   
+
+
+<!-- Departments & Services Accordion -->
+<div class="accordion" id="departmentsAccordion">
+    @foreach (var dept in Model)
+    {
+        var deptId = $"dept-{dept.Id}";
+        <div class="accordion-item shadow-sm mb-2">
+            <h2 class="accordion-header" id="heading-@deptId">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@deptId" aria-expanded="false" aria-controls="collapse-@deptId">
+                    @dept.Name
+                    <span class="badge bg-secondary ms-2">@dept.Services.Count services</span>
+                </button>
+            </h2>
+            <div id="collapse-@deptId" class="accordion-collapse collapse" aria-labelledby="heading-@deptId" data-bs-parent="#departmentsAccordion">
+                <div class="accordion-body">
+                    <p class="mb-2"><strong>Description:</strong> @dept.Description</p>
+                    <h6>Services</h6>
+                    <ul class="list-group mb-2">
+                        @foreach (var svc in dept.Services)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>@svc.Name</strong>
+                                    @if (!string.IsNullOrEmpty(svc.Description))
+                                    {
+                                        <small class="text-muted ms-2">(@svc.Description)</small>
+                                    }
+                                </div>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-warning edit-service" 
+                                            data-id="@svc.Id" data-name="@svc.Name" 
+                                            data-dept="@svc.ServiceDepartmentId" data-desc="@svc.Description">Edit</button>
+                                    <form asp-action="DeleteService" asp-route-id="@svc.Id" method="post" class="d-inline" onsubmit="return confirm('Delete service?');">
+                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary edit-department" data-id="@dept.Id" data-name="@dept.Name" data-desc="@dept.Description">Edit Department</button>
+                        <form asp-action="DeleteDepartment" asp-route-id="@dept.Id" method="post" class="d-inline" onsubmit="return confirm('Delete department and all its services?');">
+                            <button type="submit" class="btn btn-danger">Delete Department</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Fill department form for editing
+        document.querySelectorAll('.edit-department').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('DepartmentId').value = btn.dataset.id;
+                document.getElementById('DepartmentName').value = btn.dataset.name;
+                document.querySelector('form[asp-action="SaveDepartment"] textarea').value = btn.dataset.desc;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+
+        // Fill service form for editing
+        document.querySelectorAll('.edit-service').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('ServiceId').value = btn.dataset.id;
+                document.getElementById('ServiceName').value = btn.dataset.name;
+                document.getElementById('ServiceDepartmentSelect').value = btn.dataset.dept;
+                document.querySelector('form[asp-action="SaveService"] textarea').value = btn.dataset.desc;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+    </script>
+}

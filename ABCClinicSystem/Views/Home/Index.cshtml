@@ -6,98 +6,9 @@
 <section class="text-white text-center py-5 mb-5" style="background-color: #0D3B66;">
     <div class="container">
         <h1 class="display-4 fw-bold">Welcome to ABCClinicSystem</h1>
-        <p class="lead">Prioritize your health and manage your appointments and medical records easily.</p>
-        @* Removed Get Started and Login buttons here *@
+        <p class="lead">Prioritize your health and manage your medical care easily.</p>
     </div>
 </section>
-
-
-<!-- Feature Cards Section -->
-<section class="container mb-5">
-    <div class="row text-center">
-
-        <!-- Appointments Card -->
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm" style="background-color: #F0F0F0;">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold text-primary">Appointments</h5>
-                    <p class="card-text text-dark">Schedule and manage patient appointments efficiently.</p>
-                    <a asp-controller="Appointment" asp-action="Index" class="btn" style="background-color: #00A896; color: white;">View Appointments</a>
-                </div>
-            </div>
-        </div>
-
-        
-        <!-- Medical Records Card -->
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm" style="background-color: #F0F0F0;">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold text-primary">Medical Records</h5>
-                    <p class="card-text text-dark">Access and manage patient medical history securely.</p>
-
-                    @if (User.Identity?.IsAuthenticated ?? false)
-                    {
-                        <!-- Show View Records button if logged in -->
-                        <a asp-controller="MedicalRecord" asp-action="Index" class="btn" style="background-color: #00A896; color: white;">
-                            View Records
-                        </a>
-                    }
-                    else
-                    {
-                        <!-- Show Login button if not logged in -->
-                        <a asp-area="Identity" asp-page="/Account/Login" class="btn" style="background-color: #00A896; color: white;">
-                            Login to View Records
-                        </a>
-                    }
-                </div>
-            </div>
-        </div>
-        
-
-        <!-- Dashboard Card -->
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm" style="background-color: #F0F0F0;">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold text-primary">Dashboard</h5>
-                    <p class="card-text text-dark">Go to your role dashboard to manage operations.</p>
-
-                    @if (User.Identity?.IsAuthenticated ?? false)
-                    {
-                        @* Role-based dashboard buttons *@
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <a asp-controller="Admin" asp-action="Dashboard" class="btn" style="background-color: #FFC857; color: #0D3B66;">Admin Dashboard</a>
-                        }
-                        else if (User.IsInRole("Doctor"))
-                        {
-                            <a asp-controller="Doctor" asp-action="Dashboard" class="btn" style="background-color: #0D3B66; color: white;">Doctor Dashboard</a>
-                        }
-                        else if (User.IsInRole("Manager"))
-                        {
-                            <a asp-controller="Manager" asp-action="Dashboard" class="btn" style="background-color: #00A896; color: white;">Manager Dashboard</a>
-                        }
-                        else if (User.IsInRole("Patient"))
-                        {
-                            <a asp-controller="Patient" asp-action="Dashboard" class="btn" style="background-color: #6A6A6A; color: white;">My Dashboard</a>
-                        }
-                    }
-                    else
-                    {
-                        @* Login button for non-authenticated users styled like other buttons *@
-                        <a asp-area="Identity" asp-page="/Account/Login" 
-                           class="btn" 
-                           style="background-color: #00A896; color: white;">
-                            Login
-                        </a>
-                    }
-                </div>
-            </div>
-        </div>
-
-    </div>
-</section>
-
-
 
 <!-- Why Choose Us Section -->
 <section class="py-5 mb-5" style="background-color: #E5E5E5;">
@@ -118,6 +29,157 @@
                 <div class="mb-2 display-6 text-primary">🔒</div>
                 <h5 class="fw-bold text-dark">Trusted & Secure</h5>
                 <p class="text-dark">We maintain confidentiality and provide reliable, easy-to-use services.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Services / Specialties Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-primary fw-bold mb-4 text-center">
+            <i class="bi bi-briefcase-medical me-2"></i>Our Services & Specialties
+        </h2>
+        <div class="row g-4">
+
+            <!-- Cardiology -->
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-primary service-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-primary">
+                            <i class="bi bi-heart-fill me-2"></i>Cardiology
+                        </h5>
+                        <p class="card-text">Comprehensive heart care including diagnosis, treatment, and management of cardiovascular conditions.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pediatrics -->
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-success service-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-success">
+                            <i class="bi bi-emoji-smile-fill me-2"></i>Pediatrics
+                        </h5>
+                        <p class="card-text">Focused on child health and wellness, offering preventive care, vaccinations, and regular check-ups.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dermatology -->
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-warning service-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-warning">
+                            <i class="bi bi-droplet-fill me-2"></i>Dermatology
+                        </h5>
+                        <p class="card-text">Professional skin treatment, consultation, and care for all ages, addressing medical and cosmetic concerns.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Add this to your <style> block or site.css -->
+<style>
+    .service-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-width 0.3s ease;
+        cursor: pointer;
+    }
+
+    .service-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        border-width: 2px;
+    }
+</style>
+
+
+<!-- Clinic History & Mission -->
+<section class="py-5 mb-5" style="background-color: #f0f8ff;">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-4 text-primary">
+            <i class="bi bi-building me-2"></i>About ABCClinicSystem
+        </h2>
+        <p class="lead text-dark mx-auto" style="max-width: 800px;">
+            Founded to provide high-quality medical care, ABCClinicSystem focuses on patient-centered services. 
+            Our mission is to improve health outcomes and ensure every patient receives professional, compassionate care.
+        </p>
+    </div>
+</section>
+
+
+<!-- Testimonials / Patient Reviews Carousel -->
+<section class="py-5" style="background-color: #E5E5E5;">
+    <div class="container">
+        <h2 class="text-primary fw-bold text-center mb-5">
+            <i class="bi bi-chat-left-text me-2"></i>Patient Testimonials
+        </h2>
+
+        <div id="testimonialCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+
+                <!-- Testimonial 1 -->
+                <div class="carousel-item active">
+                    <div class="card shadow-sm border-0 text-center mx-auto" style="max-width: 600px; background-color: #0D3B66; color: white;">
+                        <div class="card-body">
+                            <p class="card-text fst-italic">"The doctors and staff at ABCClinicSystem made me feel safe and cared for. Highly recommend!"</p>
+                            <h6 class="fw-bold mt-3" style="color: #FFC857;">– Jane D.</h6>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 2 -->
+                <div class="carousel-item">
+                    <div class="card shadow-sm border-0 text-center mx-auto" style="max-width: 600px; background-color: #00A896; color: white;">
+                        <div class="card-body">
+                            <p class="card-text fst-italic">"My child's check-ups are always professional and friendly. Great pediatric care!"</p>
+                            <h6 class="fw-bold mt-3" style="color: #FFD166;">– Mark T.</h6>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 3 -->
+                <div class="carousel-item">
+                    <div class="card shadow-sm border-0 text-center mx-auto" style="max-width: 600px; background-color: #FFC857; color: #0D3B66;">
+                        <div class="card-body">
+                            <p class="card-text fst-italic">"Excellent dermatology services. The staff explained everything clearly."</p>
+                            <h6 class="fw-bold mt-3">– Sarah K.</h6>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Controls -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+
+        </div>
+    </div>
+</section>
+
+<!-- Clinic Photos / Visuals -->
+<section class="py-5 mb-5">
+    <div class="container">
+        <h2 class="fw-bold mb-4 text-primary"><i class="bi bi-camera-fill me-2"></i>Clinic Photos</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <img src="~/images/clinic1.jpg" class="img-fluid rounded shadow-sm" alt="Clinic interior">
+            </div>
+            <div class="col-md-4">
+                <img src="~/images/clinic2.jpg" class="img-fluid rounded shadow-sm" alt="Happy patient">
+            </div>
+            <div class="col-md-4">
+                <img src="~/images/clinic3.jpg" class="img-fluid rounded shadow-sm" alt="Medical staff">
             </div>
         </div>
     </div>

@@ -12,9 +12,8 @@ namespace ABCClinicSystem.Models
         public string PatientId { get; set; }
         public ApplicationUser Patient { get; set; }
 
-        // Doctor (required)
-        [Required(ErrorMessage = "Doctor field is required.")]
-        public string DoctorId { get; set; }
+        // Doctor (required for admin only, optional for doctors)
+        public string? DoctorId { get; set; }  // nullable
         public ApplicationUser Doctor { get; set; }
 
         // Diagnosis (required)

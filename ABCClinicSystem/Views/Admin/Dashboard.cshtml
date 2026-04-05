@@ -1,46 +1,211 @@
 ﻿@model ABCClinicSystem.Models.Admin
-
 @{
     ViewData["Title"] = "Admin Dashboard";
 }
 
-<h1 class="text-primary">Admin Dashboard</h1>
+<h1 class="text-primary mb-4">Admin Dashboard</h1>
 
-<div class="row mt-4">
-    <div class="col-md-3">
-        <div class="card bg-info text-white p-3 mb-3">
-            <h5>Total Users</h5>
-            <p>@Model.TotalUsers</p>
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-2 col-sm-6">
+        <div class="card bg-info text-white text-center shadow-sm h-100">
+            <div class="card-body">
+                <h6>Total Users</h6>
+                <p class="display-6 mb-0">@Model.TotalUsers</p>
+            </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-success text-white p-3 mb-3">
-            <h5>Total Doctors</h5>
-            <p>@Model.TotalDoctors</p>
+    <div class="col-md-2 col-sm-6">
+        <div class="card bg-success text-white text-center shadow-sm h-100">
+            <div class="card-body">
+                <h6>Total Doctors</h6>
+                <p class="display-6 mb-0">@Model.TotalDoctors</p>
+            </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-white p-3 mb-3">
-            <h5>Total Patients</h5>
-            <p>@Model.TotalPatients</p>
+    <div class="col-md-2 col-sm-6">
+        <div class="card bg-warning text-dark text-center shadow-sm h-100">
+            <div class="card-body">
+                <h6>Total Patients</h6>
+                <p class="display-6 mb-0">@Model.TotalPatients</p>
+            </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-danger text-white p-3 mb-3">
-            <h5>Total Appointments</h5>
-            <p>@Model.TotalAppointments</p>
+    <div class="col-md-2 col-sm-6">
+        <div class="card bg-danger text-white text-center shadow-sm h-100">
+            <div class="card-body">
+                <h6>Total Appointments</h6>
+                <p class="display-6 mb-0">@Model.TotalAppointments</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-6">
+        <div class="card bg-secondary text-white text-center shadow-sm h-100">
+            <div class="card-body">
+                <h6>Total Bills</h6>
+                <p class="display-6 mb-0">@Model.TotalBills</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-6">
+        <div class="card bg-primary text-white text-center shadow-sm h-100">
+            <div class="card-body">
+                <h6>Total Revenue</h6>
+                <p class="display-6 mb-0">$@Model.TotalRevenue.ToString("N2")</p>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="mt-4">
-    <a asp-controller="Admin" asp-action="Users" class="btn btn-primary me-2">
-        Manage Users
-    </a>
-    <a asp-controller="Admin" asp-action="Appointments" class="btn btn-success me-2">
-        Manage Appointments
-    </a>
-    <a asp-controller="Admin" asp-action="MedicalRecords" class="btn btn-warning">
-        Manage Medical Records
-    </a>
+<!-- All Appointments with Editable Status -->
+@if (ViewBag.AllAppointments != null && ViewBag.AllAppointments.Count > 0)
+{
+    <h4 class="fw-bold text-primary mt-4 mb-3">All Appointments</h4>
+    <div class="table-responsive mb-4">
+        <table class="table table-striped table-hover table-bordered shadow-sm align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var appt in ViewBag.AllAppointments)
+            {
+                <tr>
+                    <td>@appt.Patient.FullName</td>
+                    <td>@appt.Doctor.FullName</td>
+                    <td>@appt.AppointmentDate.ToLocalTime().ToString("dd MMM yyyy")</td>
+                    <td>@appt.AppointmentDate.ToLocalTime().ToString("HH:mm")</td>
+                    <td>
+                        <span class="badge @(appt.Status == "Scheduled" ? "bg-warning text-dark" :
+                                           appt.Status == "Completed" ? "bg-success" :
+                                           appt.Status == "Cancelled" ? "bg-danger" : "bg-secondary")">
+                            @appt.Status
+                        </span>
+                    </td>
+                    <td>
+                        <form asp-controller="Admin" asp-action="UpdateAppointmentStatus" method="post" class="d-flex align-items-center gap-1">
+                            <input type="hidden" name="id" value="@appt.Id" />
+                            <select name="status" class="form-select form-select-sm">
+
+                                @if (appt.Status == "Scheduled")
+                                {
+                                    <option value="Scheduled" selected>Scheduled</option>
+                                }
+                                else
+                                {
+                                    <option value="Scheduled">Scheduled</option>
+                                }
+
+                                @if (appt.Status == "Completed")
+                                {
+                                    <option value="Completed" selected>Completed</option>
+                                }
+                                else
+                                {
+                                    <option value="Completed">Completed</option>
+                                }
+
+                                @if (appt.Status == "Cancelled")
+                                {
+                                    <option value="Cancelled" selected>Cancelled</option>
+                                }
+                                else
+                                {
+                                    <option value="Cancelled">Cancelled</option>
+                                }
+
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+<!-- Bills Section -->
+@if (ViewBag.Bills != null && ViewBag.Bills.Count > 0)
+{
+    <h4 class="fw-bold text-warning mt-4 mb-3">All Bills</h4>
+    <div class="table-responsive mb-4">
+        <table class="table table-striped table-hover table-bordered shadow-sm align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Amount ($)</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var bill in ViewBag.Bills)
+            {
+                <tr>
+                    <td>@bill.Patient.FullName</td>
+                    <td>@bill.Doctor.FullName</td>
+                    <td>@bill.Amount.ToString("F2")</td>
+                    <td>@bill.DueDate?.ToString("dd MMM yyyy")</td>
+                    <td>
+                        <span class="badge @(bill.Status == "Pending" ? "bg-warning text-dark" :
+                                            bill.Status == "Paid" ? "bg-success" : "bg-secondary")">
+                            @bill.Status
+                        </span>
+                    </td>
+                    <td>
+                        <form asp-controller="Admin" asp-action="UpdateBillStatus" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@bill.Id" />
+                            <select name="status" class="form-select form-select-sm d-inline w-auto">
+
+                                @if (bill.Status == "Pending")
+                                {
+                                    <option value="Pending" selected>Pending</option>
+                                }
+                                else
+                                {
+                                    <option value="Pending">Pending</option>
+                                }
+
+                                @if (bill.Status == "Paid")
+                                {
+                                    <option value="Paid" selected>Paid</option>
+                                }
+                                else
+                                {
+                                    <option value="Paid">Paid</option>
+                                }
+
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary ms-1">Update</button>
+                        </form>
+                        <form asp-controller="Admin" asp-action="DeleteBill" method="post" class="d-inline ms-1" 
+                              onsubmit="return confirm('Are you sure you want to delete this bill?');">
+                            <input type="hidden" name="id" value="@bill.Id" />
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+
+<!-- Quick Links / Navigation -->
+<div class="mt-4 d-flex flex-wrap gap-2">
+    <a asp-controller="ApplicationUser" asp-action="Index" class="btn btn-primary shadow-sm">Manage Users / Staff</a>
+    <a asp-controller="Appointment" asp-action="Index" class="btn btn-success shadow-sm">Manage Appointments</a>
+    <a asp-controller="MedicalRecord" asp-action="Index" class="btn btn-warning shadow-sm">Manage Medical Records</a>
+    <a asp-controller="Admin" asp-action="Bills" class="btn btn-secondary shadow-sm">Manage Bills</a>
+    <a asp-controller="Admin" asp-action="Departments" class="btn btn-info shadow-sm">Manage Departments & Services</a>
 </div>

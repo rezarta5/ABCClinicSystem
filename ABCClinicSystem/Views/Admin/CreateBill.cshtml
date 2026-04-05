@@ -1,0 +1,51 @@
+﻿@model ABCClinicSystem.Models.Bill
+
+<h2>Add New Bill</h2>
+
+<form asp-action="CreateBill" method="post">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <!-- Patient -->
+    <div class="mb-3">
+        <label>Patient</label>
+        <select asp-for="PatientId" class="form-control" asp-items="ViewBag.Patients">
+            <option value="">-- Select Patient --</option>
+        </select>
+    </div>
+
+    <!-- Doctor -->
+    <div class="mb-3">
+        <label>Doctor</label>
+        <select asp-for="DoctorId" class="form-control" asp-items="ViewBag.Doctors">
+            <option value="">-- Select Doctor --</option>
+        </select>
+    </div>
+
+    <!-- Amount -->
+    <div class="mb-3">
+        <label>Amount ($)</label>
+        <input asp-for="Amount" type="number" step="0.01" class="form-control" />
+    </div>
+
+    <!-- Due Date -->
+    <div class="mb-3">
+        <label>Due Date</label>
+        <input asp-for="DueDate" type="date" class="form-control" />
+    </div>
+
+    <!-- Description -->
+    <div class="mb-3">
+        <label>Description</label>
+        <textarea asp-for="Description" class="form-control"></textarea>
+    </div>
+
+    <!-- Status -->
+    <div class="mb-3">
+        <label>Status</label>
+        <select asp-for="Status" class="form-control" asp-items="ViewBag.StatusList"></select>
+    </div>
+
+    <button type="submit" class="btn btn-success">Add Bill</button>
+</form>

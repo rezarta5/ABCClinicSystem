@@ -23,7 +23,7 @@ namespace ABCClinicSystem.Controllers
             _userManager = userManager;
         }
 
-        // GET: /MedicalRecord
+        // ---------------- Index ----------------
         public async Task<IActionResult> Index()
         {
             var records = await _context.MedicalRecords
@@ -34,52 +34,70 @@ namespace ABCClinicSystem.Controllers
 
             return View(records);
         }
+        
+        
 
-        // ---------------- Create ----------------
-
-        // GET: /MedicalRecord/Create
+        // ---------------- Create (GET) ----------------
         public async Task<IActionResult> Create()
         {
-            var model = new MedicalRecord
-            {
-                CreatedAt = DateTime.UtcNow
-            };
+            var model = new MedicalRecord { CreatedAt = DateTime.UtcNow };
 
-            await PopulateDropdownsAsync();
+            // Populate patients for all users
+            var patients = await _userManager.GetUsersInRoleAsync("Patient");
+            ViewBag.Patients = new SelectList(patients, "Id", "FullName");
+
+            // Populate doctors only for Admin
+            if (User.IsInRole("Admin"))
+            {
+                var doctors = await _userManager.GetUsersInRoleAsync("Doctor");
+                ViewBag.Doctors = new SelectList(doctors, "Id", "FullName");
+            }
+
             return View(model);
+            
+            
         }
 
-// POST: /MedicalRecord/Create
+        // ---------------- Create (POST) ----------------
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(MedicalRecord record)
         {
-            // Assign DoctorId if logged in user is Doctor
-            if (!User.IsInRole("Admin"))
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null) return NotFound();
+
+            // Assign Doctor only if the user is a Doctor
+            if (User.IsInRole("Doctor"))
             {
-                var doctorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(doctorId))
-                {
-                    ModelState.AddModelError("", "Unable to identify logged-in doctor.");
-                }
-                else
-                {
-                    record.DoctorId = doctorId;
-                    ModelState.Remove("DoctorId"); // remove error since we assigned it
-                }
+                record.DoctorId = currentUser.Id;
             }
 
-            // Ensure CreatedAt is set
-            if (record.CreatedAt == default)
-                record.CreatedAt = DateTime.UtcNow;
+            // Remove navigation property validation
+            ModelState.Remove("DoctorId");
+            ModelState.Remove("Doctor");
+            ModelState.Remove("Patient");
 
-            // Make sure PatientId is not null
+            // Validate Patient manually
             if (string.IsNullOrEmpty(record.PatientId))
-                ModelState.AddModelError("PatientId", "Please select a patient.");
+            {
+                ModelState.AddModelError("PatientId", "Patient is required.");
+            }
 
+            // Ensure UTC
+            record.CreatedAt = DateTime.SpecifyKind(record.CreatedAt, DateTimeKind.Utc);
+
+            // Repopulate dropdowns if validation fails
             if (!ModelState.IsValid)
             {
-                await PopulateDropdownsAsync();
+                var patients = await _userManager.GetUsersInRoleAsync("Patient");
+                ViewBag.Patients = new SelectList(patients, "Id", "FullName", record.PatientId);
+
+                if (User.IsInRole("Admin"))
+                {
+                    var doctors = await _userManager.GetUsersInRoleAsync("Doctor");
+                    ViewBag.Doctors = new SelectList(doctors, "Id", "FullName", record.DoctorId);
+                }
+
                 return View(record);
             }
 
@@ -89,10 +107,11 @@ namespace ABCClinicSystem.Controllers
             TempData["Success"] = "Medical record created successfully!";
             return RedirectToAction(nameof(Index));
         }
+        
+        
+        
 
-        // ---------------- Edit ----------------
-
-        // GET: /MedicalRecord/Edit/5
+        // ---------------- Edit (GET) ----------------
         public async Task<IActionResult> Edit(int id)
         {
             var record = await _context.MedicalRecords.FindAsync(id);
@@ -102,25 +121,37 @@ namespace ABCClinicSystem.Controllers
             return View(record);
         }
 
-        // POST: /MedicalRecord/Edit/5
+        // ---------------- Edit (POST) ----------------
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, MedicalRecord record)
         {
             if (id != record.Id) return BadRequest();
 
-            // Assign DoctorId if user is not Admin
-            if (!User.IsInRole("Admin"))
+            // ✅ Remove ALL problematic validation
+            ModelState.Remove(nameof(MedicalRecord.DoctorId));
+            ModelState.Remove("Doctor");   // 🔥 ADD THIS
+            ModelState.Remove("Patient");  // 🔥 ADD THIS
+
+            // ✅ Auto-assign doctor
+            if (User.IsInRole("Doctor"))
             {
                 var doctorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(doctorId))
-                    ModelState.AddModelError("", "Unable to identify logged-in doctor.");
-                else
+
+                if (!string.IsNullOrEmpty(doctorId))
+                {
                     record.DoctorId = doctorId;
+                }
             }
 
-            // Ensure CreatedAt is UTC
-            record.CreatedAt = record.CreatedAt.ToUniversalTime();
+            // ✅ Validate Patient manually
+            if (string.IsNullOrEmpty(record.PatientId))
+            {
+                ModelState.AddModelError("PatientId", "Patient is required.");
+            }
+
+            // ✅ Ensure UTC
+            record.CreatedAt = DateTime.SpecifyKind(record.CreatedAt, DateTimeKind.Utc);
 
             if (!ModelState.IsValid)
             {
@@ -129,25 +160,13 @@ namespace ABCClinicSystem.Controllers
             }
 
             _context.MedicalRecords.Update(record);
+            await _context.SaveChangesAsync();
 
-            try
-            {
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "Medical record updated successfully!";
-            }
-            catch (DbUpdateException ex)
-            {
-                ModelState.AddModelError("", "Error updating database: " + ex.Message);
-                await PopulateDropdownsAsync();
-                return View(record);
-            }
-
+            TempData["Success"] = "Medical record updated successfully!";
             return RedirectToAction(nameof(Index));
         }
 
-        // ---------------- Delete ----------------
-
-        // GET: /MedicalRecord/Delete/5
+        // ---------------- Delete (GET) ----------------
         public async Task<IActionResult> Delete(int id)
         {
             var record = await _context.MedicalRecords
@@ -160,7 +179,7 @@ namespace ABCClinicSystem.Controllers
             return View(record);
         }
 
-        // POST: /MedicalRecord/Delete/5
+        // ---------------- Delete (POST) ----------------
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -176,15 +195,14 @@ namespace ABCClinicSystem.Controllers
         }
 
         // ---------------- Helper ----------------
-
-        // Populate dropdowns for Patients and Doctors
         private async Task PopulateDropdownsAsync()
         {
             ViewBag.Patients = new SelectList(await _context.Users
                 .Where(u => u.RoleType == "Patient")
                 .ToListAsync(), "Id", "FullName");
 
-            if (User.IsInRole("Admin"))
+            // Only Admin (not Doctor) sees doctor dropdown
+            if (User.IsInRole("Admin") && !User.IsInRole("Doctor"))
             {
                 ViewBag.Doctors = new SelectList(await _context.Users
                     .Where(u => u.RoleType == "Doctor")

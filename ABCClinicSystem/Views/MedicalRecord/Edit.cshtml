@@ -7,6 +7,7 @@
 
 <h2>Edit Medical Record</h2>
 
+<!-- Success message -->
 @if (TempData["Success"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -19,19 +20,24 @@
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="Id" />
 
-    <div asp-validation-summary="All" class="text-danger"></div>
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
     <!-- Patient Dropdown -->
     <div class="mb-3">
         <label asp-for="PatientId" class="form-label">Patient</label>
-        <select asp-for="PatientId" class="form-select" asp-items="ViewBag.Patients">
+        <select asp-for="PatientId" class="form-select" asp-items="ViewBag.Patients" required>
             <option value="">-- Select Patient --</option>
         </select>
         <span asp-validation-for="PatientId" class="text-danger"></span>
     </div>
 
-    <!-- Doctor Dropdown for Admin only -->
-    @if (User.IsInRole("Admin"))
+    <!-- Doctor -->
+    @if (User.IsInRole("Doctor"))
+    {
+        <input asp-for="DoctorId" type="hidden" 
+               value="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" />
+    }
+    else
     {
         <div class="mb-3">
             <label asp-for="DoctorId" class="form-label">Doctor</label>
@@ -40,11 +46,6 @@
             </select>
             <span asp-validation-for="DoctorId" class="text-danger"></span>
         </div>
-    }
-    else
-    {
-        <!-- Hidden input for Doctor -->
-        <input type="hidden" asp-for="DoctorId" />
     }
 
     <!-- Diagnosis -->
@@ -64,7 +65,8 @@
     <!-- Record Date & Time (UTC) -->
     <div class="mb-3">
         <label asp-for="CreatedAt" class="form-label">Record Date & Time (UTC)</label>
-        <input asp-for="CreatedAt" type="datetime-local" class="form-control" />
+        <input asp-for="CreatedAt" type="datetime-local" class="form-control" 
+               value="@(Model?.CreatedAt.ToString("yyyy-MM-ddTHH:mm") ?? DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm"))" />
         <span asp-validation-for="CreatedAt" class="text-danger"></span>
     </div>
 

@@ -1,43 +1,64 @@
 ﻿@model ABCClinicSystem.Models.ApplicationUser
 
 @{
-    ViewData["Title"] = "Add User";
+    ViewData["Title"] = "Add New User";
 }
 
 <h2>Add New User</h2>
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
 <form asp-action="Create" method="post">
-    <div class="form-group">
-        <label asp-for="FullName"></label>
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <!-- Full Name -->
+    <div class="mb-3">
+        <label asp-for="FullName" class="form-label">Full Name</label>
         <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="UserName"></label>
-        <input asp-for="UserName" class="form-control" />
+    <!-- Email -->
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label">Email</label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="Email"></label>
-        <input asp-for="Email" type="email" class="form-control" />
-    </div>
-
-    <div class="form-group">
-        <label asp-for="RoleType"></label>
-        <select asp-for="RoleType" class="form-control">
-            <option value="Admin">Admin</option>
-            <option value="Doctor">Doctor</option>
-            <option value="Doctor">Manager</option>
-            <option value="Patient">Patient</option>
+    <!-- Role -->
+    <div class="mb-3">
+        <label asp-for="RoleType" class="form-label">Role</label>
+        <select asp-for="RoleType" class="form-select">
+            <option value="">-- Select Role --</option>
+            @foreach (var role in ViewBag.Roles as string[])
+            {
+                <option value="@role">@role</option>
+            }
         </select>
+        <span asp-validation-for="RoleType" class="text-danger"></span>
+    </div>
+    
+    
+    <div class="mb-3">
+        <label asp-for="UserName" class="form-label">Username</label>
+        <input asp-for="UserName" class="form-control" />
+        <span asp-validation-for="UserName" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label>Password</label>
-        <input name="password" type="password" class="form-control" />
+    <!-- Password -->
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" />
     </div>
 
-    <br />
-    <button type="submit" class="btn btn-success">Create</button>
-    <a class="btn btn-secondary" asp-action="Index">Cancel</a>
+    <button type="submit" class="btn btn-primary">Create User</button>
+    <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
 </form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

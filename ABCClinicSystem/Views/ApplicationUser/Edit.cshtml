@@ -1,4 +1,5 @@
 ﻿@model ABCClinicSystem.Models.ApplicationUser
+@using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
     ViewData["Title"] = "Edit User";
@@ -7,33 +8,44 @@
 <h2>Edit User</h2>
 
 <form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <!-- Email -->
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <!-- Full Name -->
+    <div class="mb-3">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+    
+    <div class="mb-3">
+    <label asp-for="UserName" class="form-label">Username</label>
+    <input asp-for="UserName" class="form-control" />
+    <span asp-validation-for="UserName" class="text-danger"></span>
+    </div>
+
+    <!-- Role -->
+    <div class="mb-3">
+        <label asp-for="RoleType" class="form-label">Role</label>
+        <select asp-for="RoleType" class="form-select" asp-items="ViewBag.Roles">
+            <option value="">-- Select Role --</option>
+        </select>
+        <span asp-validation-for="RoleType" class="text-danger"></span>
+    </div>
+
     <input type="hidden" asp-for="Id" />
 
-    <div class="form-group">
-        <label asp-for="FullName"></label>
-        <input asp-for="FullName" class="form-control" />
-    </div>
-
-    <div class="form-group">
-        <label asp-for="UserName"></label>
-        <input asp-for="UserName" class="form-control" />
-    </div>
-
-    <div class="form-group">
-        <label asp-for="Email"></label>
-        <input asp-for="Email" type="email" class="form-control" />
-    </div>
-
-    <div class="form-group">
-        <label asp-for="RoleType"></label>
-        <select asp-for="RoleType" class="form-control">
-            <option value="Admin">Admin</option>
-            <option value="Doctor">Doctor</option>
-            <option value="Patient">Patient</option>
-        </select>
-    </div>
-
-    <br />
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a class="btn btn-secondary" asp-action="Index">Cancel</a>
+    <button type="submit" class="btn btn-primary me-2">Save Changes</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

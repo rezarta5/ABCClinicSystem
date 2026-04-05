@@ -3,6 +3,7 @@ using System;
 using ABCClinicSystem.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ABCClinicSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260402081849_FixBillPatientIdType")]
+    partial class FixBillPatientIdType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -109,9 +112,6 @@ namespace ABCClinicSystem.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("DoctorId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -124,22 +124,15 @@ namespace ABCClinicSystem.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<int?>("ServiceId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DepartmentId");
-
                     b.HasIndex("DoctorId");
 
                     b.HasIndex("PatientId");
-
-                    b.HasIndex("ServiceId");
 
                     b.ToTable("Appointments");
                 });
@@ -230,6 +223,7 @@ namespace ABCClinicSystem.Migrations
                         .HasColumnType("character varying(500)");
 
                     b.Property<string>("DoctorId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Notes")
@@ -248,51 +242,6 @@ namespace ABCClinicSystem.Migrations
                     b.HasIndex("PatientId");
 
                     b.ToTable("MedicalRecords");
-                });
-
-            modelBuilder.Entity("ABCClinicSystem.Models.Service", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("ServiceDepartmentId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ServiceDepartmentId");
-
-                    b.ToTable("Services");
-                });
-
-            modelBuilder.Entity("ABCClinicSystem.Models.ServiceDepartment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ServiceDepartments");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -433,10 +382,6 @@ namespace ABCClinicSystem.Migrations
 
             modelBuilder.Entity("ABCClinicSystem.Models.Appointment", b =>
                 {
-                    b.HasOne("ABCClinicSystem.Models.ServiceDepartment", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId");
-
                     b.HasOne("ABCClinicSystem.Models.ApplicationUser", "Doctor")
                         .WithMany()
                         .HasForeignKey("DoctorId")
@@ -449,17 +394,9 @@ namespace ABCClinicSystem.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ABCClinicSystem.Models.Service", "Service")
-                        .WithMany()
-                        .HasForeignKey("ServiceId");
-
-                    b.Navigation("Department");
-
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
-
-                    b.Navigation("Service");
                 });
 
             modelBuilder.Entity("ABCClinicSystem.Models.Bill", b =>
@@ -496,7 +433,9 @@ namespace ABCClinicSystem.Migrations
                 {
                     b.HasOne("ABCClinicSystem.Models.ApplicationUser", "Doctor")
                         .WithMany()
-                        .HasForeignKey("DoctorId");
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("ABCClinicSystem.Models.ApplicationUser", "Patient")
                         .WithMany()
@@ -507,17 +446,6 @@ namespace ABCClinicSystem.Migrations
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
-                });
-
-            modelBuilder.Entity("ABCClinicSystem.Models.Service", b =>
-                {
-                    b.HasOne("ABCClinicSystem.Models.ServiceDepartment", "ServiceDepartment")
-                        .WithMany("Services")
-                        .HasForeignKey("ServiceDepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ServiceDepartment");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -569,11 +497,6 @@ namespace ABCClinicSystem.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("ABCClinicSystem.Models.ServiceDepartment", b =>
-                {
-                    b.Navigation("Services");
                 });
 #pragma warning restore 612, 618
         }

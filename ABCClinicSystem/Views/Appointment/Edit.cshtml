@@ -28,6 +28,19 @@
         </select>
         <span asp-validation-for="PatientId" class="text-danger"></span>
     </div>
+    
+    
+    <!-- Department dropdown -->
+    <select asp-for="DepartmentId" asp-items="Model.Departments" class="form-control" id="DepartmentId">
+        <option value="">-- Select Department --</option>
+    </select>
+
+    <!-- Service dropdown -->
+    <select asp-for="ServiceId" class="form-control" id="ServiceId">
+        <option value="">-- Select Service --</option>
+    </select>
+    
+    
 
     <div class="mb-3">
         <label asp-for="AppointmentDate" class="form-label"></label>
@@ -46,6 +59,7 @@
         <label asp-for="Reason" class="form-label"></label>
         <textarea asp-for="Reason" class="form-control"></textarea>
     </div>
+    
 
     <br />
 
@@ -55,6 +69,43 @@
     </div>
 </form>
 
+
 @section Scripts{
     <partial name="_ValidationScriptsPartial" />
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+
+            var selectedDept = $('#DepartmentId').val();
+            var selectedService = '@Model.ServiceId';
+
+            // Load services for the selected department on page load
+            if (selectedDept) {
+                loadServices(selectedDept, selectedService);
+            }
+
+            // When Department changes, fetch services
+            $('#DepartmentId').change(function() {
+                var departmentId = $(this).val();
+                loadServices(departmentId, null);
+            });
+
+            function loadServices(departmentId, selectedServiceId) {
+                var serviceDropdown = $('#ServiceId');
+                serviceDropdown.empty();
+                serviceDropdown.append('<option value="">-- Select Service --</option>');
+
+                if (departmentId) {
+                    $.getJSON('@Url.Action("GetServicesByDepartment", "Appointment")', { departmentId: departmentId }, function(data) {
+                        $.each(data, function(i, service) {
+                            var selected = (selectedServiceId == service.id) ? ' selected' : '';
+                            serviceDropdown.append('<option value="' + service.id + '"' + selected + '>' + service.name + '</option>');
+                        });
+                    });
+                }
+            }
+
+        });
+    </script>
 }

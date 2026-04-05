@@ -25,16 +25,17 @@ namespace ABCClinicSystem.Controllers
             // Detect role
             string role = User.IsInRole("Doctor") ? "Doctor" :
                 User.IsInRole("Patient") ? "Patient" :
-                User.IsInRole("Admin") ? "Admin" :
-                "Manager";
+                User.IsInRole("Admin") ? "Admin" : "Manager";
 
             ViewBag.UserRole = role;
 
-            // Start with all appointments
+            // Start with all appointments, include Service and Department
             IQueryable<Appointment> appointments = _context.Appointments
                 .Include(a => a.Doctor)
-                .Include(a => a.Patient);
-
+                .Include(a => a.Patient)
+                .Include(a => a.Service)
+                .ThenInclude(s => s.ServiceDepartment); // 🔹 include Department
+           
             // Get current user ID
             var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -74,22 +75,53 @@ namespace ABCClinicSystem.Controllers
                         Selected = u.Id == currentUserId // Pre-select logged-in patient
                     })
                     .ToList(),
-
+                
+                
                 // AppointmentTypes already have defaults in model constructor
             };
+            
+            
+            // Populate Department dropdown
+            appointment.Departments = _context.ServiceDepartments
+                .Select(d => new SelectListItem
+                {
+                    Value = d.Id.ToString(),
+                    Text = d.Name
+                })
+                .ToList();
 
+// Populate Service dropdown
+            appointment.Services = _context.Services
+                .Select(s => new SelectListItem
+                {
+                    Value = s.Id.ToString(),
+                    Text = s.Name
+                })
+                .ToList();
+            
+            
             // Pre-select default AppointmentType
             foreach (var item in appointment.AppointmentTypes)
             {
                 if (item.Value == appointment.AppointmentType)
                     item.Selected = true;
             }
+            
+            ViewBag.Departments = _context.ServiceDepartments
+                .Select(d => new SelectListItem { Value = d.Id.ToString(), Text = d.Name })
+                .ToList();
+
+            ViewBag.Services = _context.Services
+                .Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name })
+                .ToList();
 
             // Pre-fill AppointmentDate with current time
             appointment.AppointmentDate = DateTime.Now;
 
             return View(appointment);
         }
+        
+        
 
 // POST: Appointment/Book
 
@@ -115,6 +147,9 @@ namespace ABCClinicSystem.Controllers
                 Reason = model.Reason,
                 Status = "Scheduled"
             };
+            
+            appointment.DepartmentId = model.DepartmentId;
+            appointment.ServiceId = model.ServiceId;
 
             _context.Appointments.Add(appointment);
             await _context.SaveChangesAsync();
@@ -126,6 +161,18 @@ namespace ABCClinicSystem.Controllers
                 return RedirectToAction("Dashboard", "Doctor");
             else
                 return RedirectToAction("Index", "Appointment");
+        }
+        
+        // GET: Appointment/GetServicesByDepartment/5
+        [HttpGet]
+        public async Task<IActionResult> GetServicesByDepartment(int departmentId)
+        {
+            var services = await _context.Services
+                .Where(s => s.ServiceDepartmentId == departmentId)
+                .Select(s => new { id = s.Id, name = s.Name })
+                .ToListAsync();
+
+            return Json(services);
         }
 
 
@@ -165,6 +212,26 @@ namespace ABCClinicSystem.Controllers
                     Selected = u.Id == appointment.PatientId || u.Id == currentUserId && User.IsInRole("Patient")
                 })
                 .ToList();
+            
+            // Departments dropdown
+            appointment.Departments = _context.ServiceDepartments
+                .Select(d => new SelectListItem
+                {
+                    Value = d.Id.ToString(),
+                    Text = d.Name,
+                    Selected = d.Id == appointment.DepartmentId
+                })
+                .ToList();
+
+// Services dropdown
+            appointment.Services = _context.Services
+                .Select(s => new SelectListItem
+                {
+                    Value = s.Id.ToString(),
+                    Text = s.Name,
+                    Selected = s.Id == appointment.ServiceId
+                })
+                .ToList();
 
             // Mark current AppointmentType selection
             foreach (var item in appointment.AppointmentTypes)
@@ -196,6 +263,10 @@ namespace ABCClinicSystem.Controllers
                     appointment.AppointmentType = model.AppointmentType;
                     appointment.Reason = model.Reason;
                     appointment.Status = model.Status;
+                    
+                    // 🔹 Update Department and Service
+                    appointment.DepartmentId = model.DepartmentId;
+                    appointment.ServiceId = model.ServiceId;
 
                     // Convert AppointmentDate to UTC
                     appointment.AppointmentDate = DateTime.SpecifyKind(model.AppointmentDate, DateTimeKind.Utc);

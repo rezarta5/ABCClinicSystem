@@ -21,13 +21,17 @@
 <table class="table table-bordered mt-3">
     <thead>
     <tr>
+    <tr>
         <th>Patient</th>
         <th>Doctor</th>
         <th>Date</th>
         <th>Time</th>
         <th>Reason</th>
+        <th>Department</th>
+        <th>Service</th>
         <th>Actions</th>
     </tr>
+    
     </thead>
     <tbody>
     @foreach (var appt in Model)
@@ -38,6 +42,8 @@
             <td>@appt.AppointmentDate.ToShortDateString()</td>
             <td>@appt.AppointmentDate.ToString("HH:mm")</td>
             <td>@appt.Reason</td>
+            <td>@appt.Service?.ServiceDepartment?.Name</td>
+            <td>@appt.Service?.Name</td>
             <td>
                 <a asp-controller="Appointment" asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-warning btn-sm">Edit</a>
                 <a asp-controller="Appointment" asp-action="Delete" asp-route-id="@appt.Id" class="btn btn-danger btn-sm">Delete</a>

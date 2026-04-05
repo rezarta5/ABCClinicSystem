@@ -3,6 +3,7 @@ using System;
 using ABCClinicSystem.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ABCClinicSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260403210732_AddDepartmentsAndServices")]
+    partial class AddDepartmentsAndServices
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -265,12 +268,7 @@ namespace ABCClinicSystem.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("ServiceDepartmentId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("ServiceDepartmentId");
 
                     b.ToTable("Services");
                 });
@@ -509,17 +507,6 @@ namespace ABCClinicSystem.Migrations
                     b.Navigation("Patient");
                 });
 
-            modelBuilder.Entity("ABCClinicSystem.Models.Service", b =>
-                {
-                    b.HasOne("ABCClinicSystem.Models.ServiceDepartment", "ServiceDepartment")
-                        .WithMany("Services")
-                        .HasForeignKey("ServiceDepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ServiceDepartment");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -569,11 +556,6 @@ namespace ABCClinicSystem.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("ABCClinicSystem.Models.ServiceDepartment", b =>
-                {
-                    b.Navigation("Services");
                 });
 #pragma warning restore 612, 618
         }
