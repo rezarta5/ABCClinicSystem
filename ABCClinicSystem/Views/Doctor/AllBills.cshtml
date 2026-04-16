@@ -1,6 +1,13 @@
 ﻿@model IEnumerable<ABCClinicSystem.Models.Bill>
 @{
     ViewData["Title"] = "All Bills";
+    
+}
+@if (TempData["Success"] != null)
+{
+    <div id="successMessage" class="alert alert-success">
+        @TempData["Success"]
+    </div>
 }
 
 <h2 class="mb-4 text-primary">All Bills</h2>
@@ -27,7 +34,7 @@
 
 <!-- Add Bill Button -->
 <div class="mb-3">
-    <a asp-controller="Admin" asp-action="CreateBill" class="btn btn-success">Add New Bill</a>
+    <a asp-controller="Doctor" asp-action="CreateBill" class="btn btn-success">Add New Bill</a>
 </div>
 
 <table class="table table-bordered table-striped">
@@ -89,13 +96,13 @@
             </td>
 
             <td>@bill.Description</td>
+            
 
             <!-- Actions -->
             <td>
                 
-                
                 <!-- Update Bill Status Form -->
-                <form asp-controller="Admin" asp-action="UpdateBillStatus" method="post" class="d-inline">
+                <form asp-controller="Doctor" asp-action="UpdateBillStatus" method="post" class="d-inline">
                     <input type="hidden" name="id" value="@bill.Id"/>
                     <select name="status" class="form-select form-select-sm d-inline w-auto">
 
@@ -129,19 +136,20 @@
                     </select>
                     <button type="submit" class="btn btn-sm btn-primary ms-1">Update</button>
                 </form>
+                
+                
 
                 <!-- Delete Bill Form -->
-                <form asp-controller="Admin" asp-action="DeleteBill" method="post" class="d-inline ms-1"
+                <form asp-controller="Doctor" asp-action="DeleteBill" method="post" class="d-inline ms-1"
                       onsubmit="return confirm('Are you sure you want to delete this bill?');">
                     <input type="hidden" name="id" value="@bill.Id"/>
                     <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                 </form>
 
                 <!-- Edit Button -->
-                <a asp-controller="Admin" asp-action="EditBill" asp-route-id="@bill.Id" class="btn btn-sm btn-warning ms-1">Edit</a>
+                <a asp-controller="Doctor" asp-action="EditBill" asp-route-id="@bill.Id" class="btn btn-sm btn-warning ms-1">Edit</a>
             </td>
         </tr>
     }
     </tbody>
 </table>
-

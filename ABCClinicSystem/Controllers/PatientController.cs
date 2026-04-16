@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using ABCClinicSystem.Data;
 using ABCClinicSystem.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ABCClinicSystem.Controllers
 {
@@ -16,6 +17,96 @@ namespace ABCClinicSystem.Controllers
             _userManager = userManager;
             _context = context;
         }
+
+        public async Task<IActionResult> Bills()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            var bills = await _context.Bills
+                .Include(b => b.Doctor)
+                .Where(b => b.PatientId == user.Id)
+                .OrderByDescending(b => b.CreatedAt)
+                .ToListAsync();
+
+            return View(bills);
+        }
+       public async Task<IActionResult> Dashboard()
+{
+    var user = await _userManager.GetUserAsync(User);
+    if (user == null) return NotFound();
+
+    // GET ALL APPOINTMENTS
+    var allAppointments = await _context.Appointments
+        .Include(a => a.Doctor)
+        .Where(a => a.PatientId == user.Id)
+        .ToListAsync();
+
+    // UPCOMING APPOINTMENTS (use local time consistently)
+    var now = DateTime.Now;
+
+    var upcomingAppointments = allAppointments
+        .Where(a => a.AppointmentDate >= now)
+        .OrderBy(a => a.AppointmentDate)
+        .ToList();
+
+    // GROUP BY MONTH (PROPER ORDER + SORT INSIDE GROUP)
+    var groupedByMonth = allAppointments
+        .GroupBy(a => new { a.AppointmentDate.Year, a.AppointmentDate.Month })
+        .OrderByDescending(g => g.Key.Year)
+        .ThenByDescending(g => g.Key.Month)
+        .Select(g => new
+        {
+            Month = g.Key.Month,
+            Year = g.Key.Year,
+            Appointments = g
+                .OrderBy(x => x.AppointmentDate)
+                .ToList()
+        })
+        .ToList();
+
+    ViewBag.AppointmentsByMonth = groupedByMonth;
+
+    // MEDICAL RECORDS
+    var medicalRecords = await _context.MedicalRecords
+        .Where(m => m.PatientId == user.Id)
+        .OrderByDescending(m => m.CreatedAt)
+        .ToListAsync();
+
+    // BASIC INFO
+    ViewBag.FullName = user.FullName;
+    ViewBag.UpcomingAppointments = upcomingAppointments;
+    ViewBag.MedicalRecords = medicalRecords;
+
+    // CHART DATA (THIS MONTH ONLY)
+    // CHART DATA (THIS MONTH ONLY - FIXED)
+    var appointmentsThisMonth = allAppointments
+        .Where(a => a.AppointmentDate.Month == DateTime.Now.Month
+                    && a.AppointmentDate.Year == DateTime.Now.Year)
+        .GroupBy(a => a.AppointmentDate.Day)
+        .OrderBy(g => g.Key)
+        .Select(g => new
+        {
+            Day = g.Key,
+            Count = g.Count()
+        })
+        .ToList();
+
+    ViewBag.AppointmentsDays = appointmentsThisMonth.Select(a => a.Day).ToList();
+    ViewBag.AppointmentsCount = appointmentsThisMonth.Select(a => a.Count).ToList();
+
+    // REVENUE (PLACEHOLDER)
+    var paymentsThisYear = Enumerable.Range(1, 12)
+        .Select(m => new { Month = m, Amount = 100 * m })
+        .ToList();
+
+    ViewBag.RevenueMonths = paymentsThisYear.Select(p => p.Month).ToList();
+    ViewBag.RevenueValues = paymentsThisYear.Select(p => p.Amount).ToList();
+
+    return View();
+}
+       
+
 
         // GET: Patient/Profile
         public async Task<IActionResult> Profile()
@@ -84,10 +175,10 @@ namespace ABCClinicSystem.Controllers
                 .ToListAsync();
 
             ViewBag.Doctors = doctors;
-            return View();
+            return View("~/Views/Patient/Appointments/Book.cshtml");
         }
 
-        // POST: Patient/BookAppointment
+// POST: Patient/BookAppointment
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BookAppointment(Appointment model)
@@ -101,7 +192,7 @@ namespace ABCClinicSystem.Controllers
                     .Where(u => u.RoleType == "Doctor")
                     .ToListAsync();
                 ViewBag.Doctors = doctors;
-                return View(model);
+                return View(Dashboard); // <-- explicit path
             }
 
             // Prevent double booking
@@ -114,7 +205,7 @@ namespace ABCClinicSystem.Controllers
                     .Where(u => u.RoleType == "Doctor")
                     .ToListAsync();
                 ViewBag.Doctors = doctors;
-                return View(model);
+                return View("~/Views/Patient/Appointments/Book.cshtml", model); // <-- explicit path
             }
 
             model.PatientId = user.Id;
@@ -125,6 +216,28 @@ namespace ABCClinicSystem.Controllers
 
             TempData["Success"] = "Appointment booked successfully!";
             return RedirectToAction(nameof(Appointments));
+        }
+        
+        [HttpPost]
+        [Authorize(Roles = "Patient")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PayBill(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            var bill = await _context.Bills
+                .FirstOrDefaultAsync(x => x.Id == id && x.PatientId == user.Id);
+
+            if (bill == null)
+                return Json(new { success = false, message = "Bill not found" });
+
+            if (bill.Status == "Paid")
+                return Json(new { success = false, message = "Already paid" });
+
+            bill.Status = "Paid";
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Payment successful" });
         }
     }
 }

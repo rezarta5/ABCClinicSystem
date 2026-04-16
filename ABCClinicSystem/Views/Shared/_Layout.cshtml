@@ -8,6 +8,11 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ABCClinicSystem.styles.css" asp-append-version="true" />
+    
+    @{
+        var isMedicalUser = User.Identity?.IsAuthenticated == true &&
+                            (User.IsInRole("Admin") || User.IsInRole("Doctor") || User.IsInRole("Patient"));
+    }
     <style>
         .navbar-custom {
             background-color: #0D3B66;
@@ -19,6 +24,67 @@
         .navbar-custom .nav-link:hover {
             color: #FFD166;
         }
+
+
+        /* SEARCH INPUT */
+        .search-input {
+            border-radius: 10px;
+            border: 1px solid #d0d7de;
+            padding: 6px 10px;
+            font-size: 13px;
+            transition: 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: #0D3B66;
+            box-shadow: 0 0 0 0.15rem rgba(13, 59, 102, 0.15);
+            outline: none;
+        }
+
+        /* FILTER */
+        .search-select {
+            width: 140px;
+            border-radius: 10px;
+            font-size: 13px;
+            border: 1px solid #d0d7de;
+        }
+
+        /* DROPDOWN */
+        .search-dropdown {
+            position: absolute;
+            top: 42px;
+            left: 0;
+            width: 100%;
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            max-height: 280px;
+            overflow-y: auto;
+            z-index: 9999;
+        }
+
+        /* RESULT ITEM */
+        .search-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .search-item:hover {
+            background: #f6f9fc;
+        }
+
+        .search-item strong {
+            font-size: 13px;
+            color: #111827;
+        }
+
+        .search-item small {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
     </style>
 </head>
 
@@ -40,6 +106,7 @@
                         <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Appointment" asp-action="Index">Appointments</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="MedicalRecord" asp-action="Index">Medical Records</a></li>
+                        
 
                         @* Role dashboards *@
                         @if (User.Identity?.IsAuthenticated ?? false)
@@ -48,11 +115,12 @@
                             {
                                 <li class="nav-item"><a class="nav-link fw-bold text-warning" asp-controller="Admin" asp-action="Dashboard">Admin Dashboard</a></li>
                             }
+
                             @if (User.IsInRole("Doctor"))
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="Doctor" asp-action="Dashboard">Doctor Dashboard</a></li>
                             }
-                           
+
                             @if (User.IsInRole("Patient"))
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="Patient" asp-action="Dashboard">My Dashboard</a></li>
@@ -61,6 +129,39 @@
 
                         <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
                     </ul>
+                    
+                    
+                    
+                    <div class="position-relative mx-auto" style="width:420px;">
+
+                        <div class="d-flex align-items-center gap-2">
+
+                            <!-- SEARCH INPUT -->
+                            <input id="globalSearchBox"
+                                   class="form-control form-control-sm search-input"
+                                   type="text"
+                                   placeholder="Search..."
+                                   autocomplete="off" />
+
+                            <!-- FILTER (minimal look) -->
+                            <select id="globalType" class="form-select form-select-sm search-select">
+                                <option value="all">All</option>
+                                <option value="doctors">Doctors</option>
+                                <option value="departments">Departments</option>
+                                <option value="services">Services</option>
+                            </select>
+
+                        </div>
+
+                        <!-- RESULTS -->
+                        <div id="liveSearchResults"
+                             class="search-dropdown shadow"
+                             style="display:none;">
+                        </div>
+
+                    </div>
+                    
+                    
 
                     @* Top-right: only Logout *@
                     <ul class="navbar-nav ms-auto">
@@ -99,6 +200,94 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
-</body>
+    
+    
+    
+    <script>
+
+let timer = null;
+
+function doSearch() {
+
+    let query = $("#globalSearchBox").val().trim();
+    let type = $("#globalType").val();
+
+    if (query.length < 1 && type === "all") {
+        $("#liveSearchResults").hide().empty();
+        return;
+    }
+
+    clearTimeout(timer);
+
+    timer = setTimeout(function () {
+
+        $.ajax({
+            url: '/Search/GlobalSearch',
+            type: 'GET',
+            data: { query, type },
+
+            success: function (data) {
+
+                let html = "";
+
+                if (!data || data.length === 0) {
+                    html = `<div class="p-2 text-muted">No results found</div>`;
+                }
+                else {
+
+                    data.forEach(x => {
+
+                        html += `
+                            <div class="p-2 border-bottom search-item"
+                                 data-name="${x.col1}"
+                                 style="cursor:pointer;">
+                                
+                                <strong>${x.col1 ?? ''}</strong><br/>
+                                <small class="text-muted">${x.col2 ?? ''}</small>
+                                
+                                <span class="badge bg-secondary float-end">${type}</span>
+                            </div>
+                        `;
+                    });
+                }
+
+                $("#liveSearchResults").html(html).show();
+            }
+        });
+
+    }, 300);
+}
+
+
+// 🔍 LIVE SEARCH
+$("#globalSearchBox").on("keyup", doSearch);
+
+// 🔽 FILTER CHANGE
+$("#globalType").on("change", doSearch);
+
+// 🔘 SEARCH BUTTON
+$("#searchBtn").on("click", doSearch);
+
+
+// CLICK RESULT
+$(document).on("click", ".search-item", function () {
+
+    let name = $(this).data("name");
+
+    $("#globalSearchBox").val(name);
+    $("#liveSearchResults").hide();
+});
+
+
+// CLICK OUTSIDE CLOSE
+$(document).on("click", function (e) {
+
+    if (!$(e.target).closest("#globalSearchBox, #globalType, #liveSearchResults, #searchBtn").length) {
+        $("#liveSearchResults").hide();
+    }
+});
+
+</script>
+    </body>
 </html>
 

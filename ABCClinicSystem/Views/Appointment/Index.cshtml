@@ -4,51 +4,167 @@
     ViewData["Title"] = "Appointments";
 }
 
-<h1 class="text-primary">Appointments</h1>
+<div class="container py-4">
 
-<!-- ✅ Success Message -->
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">@TempData["Success"]</div>
-}
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary mb-0">Appointments</h2>
 
-<!-- Book Appointment Button -->
-@if (User.Identity?.IsAuthenticated ?? false)
-{
-    <a asp-controller="Appointment" asp-action="Book" class="btn btn-success mb-3">Book Appointment</a>
-}
+        @if (User.Identity?.IsAuthenticated ?? false)
+        {
+            <a asp-controller="Appointment" asp-action="Book"
+               class="btn btn-success px-3">
+                + Book Appointment
+            </a>
+        }
+    </div>
 
-<table class="table table-bordered mt-3">
-    <thead>
-    <tr>
-    <tr>
-        <th>Patient</th>
-        <th>Doctor</th>
-        <th>Date</th>
-        <th>Time</th>
-        <th>Reason</th>
-        <th>Department</th>
-        <th>Service</th>
-        <th>Actions</th>
-    </tr>
-    
-    </thead>
-    <tbody>
-    @foreach (var appt in Model)
+    <!-- Alerts -->
+    @if (TempData["Success"] != null)
     {
-        <tr>
-            <td>@appt.Patient?.FullName</td>
-            <td>@appt.Doctor?.FullName</td>
-            <td>@appt.AppointmentDate.ToShortDateString()</td>
-            <td>@appt.AppointmentDate.ToString("HH:mm")</td>
-            <td>@appt.Reason</td>
-            <td>@appt.Service?.ServiceDepartment?.Name</td>
-            <td>@appt.Service?.Name</td>
-            <td>
-                <a asp-controller="Appointment" asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-warning btn-sm">Edit</a>
-                <a asp-controller="Appointment" asp-action="Delete" asp-route-id="@appt.Id" class="btn btn-danger btn-sm">Delete</a>
-            </td>
-        </tr>
+        <div id="successAlert" class="alert alert-success shadow-sm rounded-3">
+            @TempData["Success"]
+        </div>
     }
-    </tbody>
-</table>
+
+    @if (TempData["Error"] != null)
+    {
+        <div id="errorAlert" class="alert alert-danger shadow-sm rounded-3">
+            @TempData["Error"]
+        </div>
+    }
+
+    <!-- Table Card -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Reason</th>
+                    <th>Department</th>
+                    <th>Service</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                @foreach (var appt in Model)
+                {
+                    <tr>
+
+                        <td class="fw-semibold">@appt.Patient?.FullName</td>
+                        <td>@appt.Doctor?.FullName</td>
+                        <td>@appt.AppointmentDate.ToShortDateString()</td>
+                        <td>@appt.AppointmentDate.ToString("HH:mm")</td>
+                        <td class="text-muted">@appt.Reason</td>
+                        <td>@appt.Service?.ServiceDepartment?.Name</td>
+                        <td>@appt.Service?.Name</td>
+
+                        <!-- Status -->
+                        <td>
+                            @if (appt.Status == "Scheduled")
+                            {
+                                <span class="badge bg-primary">Scheduled</span>
+                            }
+                            else if (appt.Status == "Completed")
+                            {
+                                <span class="badge bg-success">Completed</span>
+                            }
+                            else if (appt.Status == "Cancelled")
+                            {
+                                <span class="badge bg-danger">Cancelled</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@appt.Status</span>
+                            }
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="text-end">
+
+                            <div class="d-flex justify-content-end gap-2">
+
+                                @if (User.IsInRole("Doctor") || User.IsInRole("Admin"))
+                                {
+                                    <!-- Update Status -->
+                                    <form asp-action="UpdateAppointmentStatus"
+                                          method="post"
+                                          class="d-flex gap-1">
+
+                                        <input type="hidden" name="id" value="@appt.Id" />
+
+                                        <select name="status" class="form-select form-select-sm">
+                                            <option value="Scheduled" selected="@(appt.Status == "Scheduled")">Scheduled</option>
+                                            <option value="Completed" selected="@(appt.Status == "Completed")">Completed</option>
+                                            <option value="Cancelled" selected="@(appt.Status == "Cancelled")">Cancelled</option>
+                                        </select>
+
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                                            Save
+                                        </button>
+                                    </form>
+
+                                    <!-- Delete -->
+                                    <a asp-action="Delete"
+                                       asp-route-id="@appt.Id"
+                                       class="btn btn-sm btn-outline-danger">
+                                        Delete
+                                    </a>
+                                }
+
+                                @if (User.IsInRole("Patient") && appt.Status == "Scheduled")
+                                {
+                                    <form asp-action="UpdateAppointmentStatus" method="post">
+                                        <input type="hidden" name="id" value="@appt.Id" />
+                                        <input type="hidden" name="status" value="Cancelled" />
+
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            Cancel
+                                        </button>
+                                    </form>
+                                }
+
+                                <a asp-action="Edit"
+                                   asp-route-id="@appt.Id"
+                                   class="btn btn-sm btn-outline-warning">
+                                    Edit
+                                </a>
+
+                            </div>
+                        </td>
+
+                    </tr>
+                }
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+    setTimeout(function () {
+
+        let success = document.getElementById("successAlert");
+        let error = document.getElementById("errorAlert");
+
+        if (success) {
+            success.style.transition = "opacity 0.5s";
+            success.style.opacity = "0";
+            setTimeout(() => success.remove(), 500);
+        }
+
+        if (error) {
+            error.style.transition = "opacity 0.5s";
+            error.style.opacity = "0";
+            setTimeout(() => error.remove(), 500);
+        }
+
+    }, 3000); // 3 seconds
+</script>

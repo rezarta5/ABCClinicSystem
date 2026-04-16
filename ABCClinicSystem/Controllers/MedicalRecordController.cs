@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace ABCClinicSystem.Controllers
 {
-    [Authorize(Roles = "Doctor,Admin")]
+    [Authorize]
     public class MedicalRecordController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -26,18 +26,33 @@ namespace ABCClinicSystem.Controllers
         // ---------------- Index ----------------
         public async Task<IActionResult> Index()
         {
-            var records = await _context.MedicalRecords
+            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            IQueryable<MedicalRecord> records = _context.MedicalRecords
                 .Include(r => r.Patient)
                 .Include(r => r.Doctor)
-                .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
+                .OrderByDescending(r => r.CreatedAt);
 
-            return View(records);
+            if (User.IsInRole("Doctor"))
+            {
+                // Doctor sees only their own records
+                records = records.Where(r => r.DoctorId == currentUserId);
+            }
+            else if (User.IsInRole("Patient"))
+            {
+                // Patient sees only their own records
+                records = records.Where(r => r.PatientId == currentUserId);
+            }
+            // Admin sees all records
+
+            return View(await records.ToListAsync());
         }
         
         
 
         // ---------------- Create (GET) ----------------
+        [Authorize(Roles = "Doctor,Admin")]
+        
         public async Task<IActionResult> Create()
         {
             var model = new MedicalRecord { CreatedAt = DateTime.UtcNow };
@@ -61,6 +76,7 @@ namespace ABCClinicSystem.Controllers
         // ---------------- Create (POST) ----------------
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Doctor,Admin")]
         public async Task<IActionResult> Create(MedicalRecord record)
         {
             var currentUser = await _userManager.GetUserAsync(User);
@@ -112,6 +128,7 @@ namespace ABCClinicSystem.Controllers
         
 
         // ---------------- Edit (GET) ----------------
+        [Authorize(Roles = "Doctor,Admin")]
         public async Task<IActionResult> Edit(int id)
         {
             var record = await _context.MedicalRecords.FindAsync(id);
@@ -124,6 +141,7 @@ namespace ABCClinicSystem.Controllers
         // ---------------- Edit (POST) ----------------
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Doctor,Admin")]
         public async Task<IActionResult> Edit(int id, MedicalRecord record)
         {
             if (id != record.Id) return BadRequest();
@@ -167,6 +185,7 @@ namespace ABCClinicSystem.Controllers
         }
 
         // ---------------- Delete (GET) ----------------
+        [Authorize(Roles = "Doctor,Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var record = await _context.MedicalRecords
@@ -182,6 +201,7 @@ namespace ABCClinicSystem.Controllers
         // ---------------- Delete (POST) ----------------
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Doctor,Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var record = await _context.MedicalRecords.FindAsync(id);

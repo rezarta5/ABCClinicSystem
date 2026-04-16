@@ -23,8 +23,14 @@ namespace ABCClinicSystem.Controllers
             _roleManager = roleManager;
         }
 // ===================== DASHBOARD =====================
+
         public async Task<IActionResult> Dashboard()
         {
+            // Get currently logged-in admin user
+            var currentUser = await _userManager.GetUserAsync(User);
+
+            // Pass full name to ViewBag
+            ViewBag.FullName = currentUser != null ? currentUser.FullName : "Admin";
             var totalUsers = await _userManager.Users.CountAsync();
             var totalDoctors = (await _userManager.GetUsersInRoleAsync("Doctor")).Count;
             var totalPatients = (await _userManager.GetUsersInRoleAsync("Patient")).Count;
@@ -32,7 +38,9 @@ namespace ABCClinicSystem.Controllers
 
             // ✅ Calculate bills info just once
             var totalBills = await _context.Bills.CountAsync();
-            var totalRevenue = await _context.Bills.SumAsync(b => b.Amount);
+            var totalRevenue = await _context.Bills
+                .Where(b => b.Status == "Paid") // Only include Paid bills
+                .SumAsync(b => b.Amount);
 
             // Load all appointments with Patient and Doctor included
             var allAppointments = await _context.Appointments
@@ -62,6 +70,36 @@ namespace ABCClinicSystem.Controllers
             // Pass data to ViewBag for the view
             ViewBag.AllAppointments = allAppointments;
             ViewBag.Bills = bills;
+            
+            
+            // Get Departments
+            var departments = await _context.ServiceDepartments.ToListAsync();
+            ViewBag.Departments = departments.Select(d => d.Name).ToList();
+
+// Count appointments per department
+            var appointmentsByDept = new List<int>();
+            foreach (var dept in departments)
+            {
+                var count = await _context.Appointments
+                    .Include(a => a.Service)
+                    .CountAsync(a => a.Service.ServiceDepartmentId == dept.Id);
+                appointmentsByDept.Add(count);
+            }
+            ViewBag.AppointmentsByDept = appointmentsByDept;
+
+// Revenue per month (for chart)
+            var months = Enumerable.Range(1, 12).Select(m => new DateTime(DateTime.Now.Year, m, 1).ToString("MMM")).ToList();
+            ViewBag.Months = months;
+
+            var revenuePerMonth = new List<decimal>();
+            foreach (var m in Enumerable.Range(1, 12))
+            {
+                var revenue = await _context.Bills
+                    .Where(b => b.Status == "Paid" && b.CreatedAt.Month == m && b.CreatedAt.Year == DateTime.Now.Year)
+                    .SumAsync(b => b.Amount);
+                revenuePerMonth.Add(revenue);
+            }
+            ViewBag.Revenue = revenuePerMonth;
 
             return View(model);
         }
@@ -375,6 +413,37 @@ namespace ABCClinicSystem.Controllers
             TempData["Success"] = "Bill deleted successfully!";
             return RedirectToAction(nameof(Bills));
         }
+        
+        
+        
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateBillStatus(int id, string status)
+        {
+            var bill = await _context.Bills.FindAsync(id);
+
+            if (bill == null)
+            {
+                TempData["Error"] = "Bill not found.";
+                return RedirectToAction(nameof(Bills));
+            }
+
+            var validStatuses = new List<string> { "Pending", "Paid", "Cancelled" };
+
+            if (!validStatuses.Contains(status))
+            {
+                TempData["Error"] = "Invalid status.";
+                return RedirectToAction(nameof(Bills));
+            }
+
+            bill.Status = status;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Bill status updated successfully!";
+            return RedirectToAction(nameof(Bills));
+        }
+        
+        
 
         public async Task<IActionResult> SeedDepartmentsAndServices()
         {

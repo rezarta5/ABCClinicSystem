@@ -34,5 +34,6 @@ namespace ABCClinicSystem.Models
         // Navigation properties
         public ApplicationUser Doctor { get; set; }
         public ApplicationUser Patient { get; set; }
+   
     }
 }

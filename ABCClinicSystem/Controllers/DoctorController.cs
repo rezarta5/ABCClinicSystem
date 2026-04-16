@@ -23,43 +23,103 @@ namespace ABCClinicSystem.Controllers
 
         // GET: Doctor/Dashboard
         public async Task<IActionResult> Dashboard()
-        {
-            var doctor = await _userManager.GetUserAsync(User);
-            if (doctor == null) return NotFound();
+{
+    var doctor = await _userManager.GetUserAsync(User);
+    if (doctor == null) return NotFound();
 
-            ViewBag.FullName = doctor.FullName;
+    ViewBag.FullName = doctor.FullName;
 
-            // Appointments
-            ViewBag.TotalAppointments = await _context.Appointments
-                .Where(a => a.DoctorId == doctor.Id)
-                .CountAsync();
+    // Get ALL appointments for this doctor (IMPORTANT)
+    var appointments = await _context.Appointments
+        .Include(a => a.Patient)
+        .Where(a => a.DoctorId == doctor.Id)
+        .ToListAsync();
 
-            ViewBag.UpcomingAppointments = await _context.Appointments
-                .Include(a => a.Patient)
-                .Where(a => a.DoctorId == doctor.Id && a.AppointmentDate >= DateTime.UtcNow)
-                .OrderBy(a => a.AppointmentDate)
-                .ToListAsync();
+    // ✅ Summary
+    ViewBag.TotalAppointments = appointments.Count;
 
-            // Medical Records
-            ViewBag.RecentMedicalRecords = await _context.MedicalRecords
-                .Include(r => r.Patient)
-                .Where(r => r.DoctorId == doctor.Id)
-                .OrderByDescending(r => r.CreatedAt)
-                .Take(5)
-                .ToListAsync();
+    ViewBag.UpcomingAppointments = appointments
+        .Where(a => a.AppointmentDate >= DateTime.Now)
+        .OrderBy(a => a.AppointmentDate)
+        .ToList();
 
-            // Bills
-            var bills = await _context.Bills
-                .Include(b => b.Patient)
-                .Where(b => b.DoctorId == doctor.Id)
-                .OrderByDescending(b => b.CreatedAt)
-                .ToListAsync();
+    // ✅ FIXED (THIS WAS MISSING)
+    ViewBag.TodaysAppointments = appointments
+        .Where(a => a.AppointmentDate.Date == DateTime.Now.Date)
+        .ToList();
 
-            ViewBag.Bills = bills;
-            ViewBag.PendingBills = bills.Count(b => b.Status == "Pending");
+    // ✅ Medical Records
+    ViewBag.RecentMedicalRecords = await _context.MedicalRecords
+        .Include(r => r.Patient)
+        .Where(r => r.DoctorId == doctor.Id)
+        .OrderByDescending(r => r.CreatedAt)
+        .Take(5)
+        .ToListAsync();
 
-            return View(); // <-- closing brace fixed here
-        }
+    // ✅ Chart: Appointments per day
+    var now = DateTime.Now;
+    int daysInMonth = DateTime.DaysInMonth(now.Year, now.Month);
+
+    var appointmentsPerDay = new List<int>();
+    var dayLabels = new List<string>();
+
+    for (int day = 1; day <= daysInMonth; day++)
+    {
+        dayLabels.Add(day.ToString());
+
+        appointmentsPerDay.Add(
+            appointments.Count(a =>
+                a.AppointmentDate.Day == day &&
+                a.AppointmentDate.Month == now.Month &&
+                a.AppointmentDate.Year == now.Year
+            )
+        );
+    }
+
+    ViewBag.AppointmentsDays = dayLabels;
+    ViewBag.AppointmentsCount = appointmentsPerDay;
+
+    // ✅ Bills
+    var bills = await _context.Bills
+        .Include(b => b.Patient)
+        .Where(b => b.DoctorId == doctor.Id)
+        .ToListAsync();
+
+    ViewBag.Bills = bills;
+    ViewBag.PendingBills = bills.Count(b => b.Status == "Pending");
+    
+    
+    // ✅ TOTAL REVENUE (sum of all paid bills)
+    ViewBag.TotalRevenue = bills
+        .Where(b => b.Status == "Paid")
+        .Sum(b => b.Amount); 
+    
+
+    // ✅ Revenue Chart
+    var months = Enumerable.Range(1, 12)
+        .Select(m => new DateTime(now.Year, m, 1).ToString("MMM"))
+        .ToList();
+
+    var revenue = new List<decimal>();
+
+    for (int m = 1; m <= 12; m++)
+    {
+        revenue.Add(
+            bills.Where(b =>
+                b.Status == "Paid" &&
+                b.CreatedAt.Month == m &&
+                b.CreatedAt.Year == now.Year
+            ).Sum(b => b.Amount)
+        );
+    }
+
+    ViewBag.RevenueMonths = months;
+    ViewBag.RevenueValues = revenue;
+
+    return View();
+}
+        
+        
 
         // GET: Doctor/Appointments
         public async Task<IActionResult> Appointments()
@@ -178,7 +238,7 @@ namespace ABCClinicSystem.Controllers
             await _context.SaveChangesAsync();
 
             TempData["Success"] = "Bill status updated successfully!";
-            return RedirectToAction(nameof(Dashboard));
+            return RedirectToAction(nameof(AllBills));
         }
 
         // GET: Doctor/CreateBill
@@ -224,8 +284,64 @@ namespace ABCClinicSystem.Controllers
             await _context.SaveChangesAsync();
 
             TempData["Success"] = "Bill created successfully!";
-            return RedirectToAction(nameof(Dashboard));
+            return RedirectToAction(nameof(AllBills));
         }
+        
+        
+        // ======================= EDIT BILL =======================
+
+/// GET: Doctor/EditBill/14
+[HttpGet]
+public async Task<IActionResult> EditBill(int id)
+{
+    var doctor = await _userManager.GetUserAsync(User);
+    if (doctor == null) return NotFound();
+
+    var bill = await _context.Bills
+        .FirstOrDefaultAsync(b => b.Id == id && b.DoctorId == doctor.Id);
+    if (bill == null) return NotFound();
+
+    // Only show patients
+    var patients = await _userManager.GetUsersInRoleAsync("Patient");
+    ViewBag.Patients = new SelectList(patients, "Id", "FullName", bill.PatientId);
+
+    // Status options (optional)
+    var statuses = new List<string> { "Pending", "Paid", "Cancelled" };
+    ViewBag.StatusList = new SelectList(statuses, bill.Status);
+
+    return View(bill);
+}
+
+// POST: Doctor/EditBill
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> EditBill(
+    int id,
+    string patientId,
+    decimal amount,
+    string description)
+{
+    var doctor = await _userManager.GetUserAsync(User);
+    if (doctor == null) return NotFound();
+
+    var bill = await _context.Bills
+        .FirstOrDefaultAsync(b => b.Id == id && b.DoctorId == doctor.Id);
+    if (bill == null) return NotFound();
+
+    // Update editable properties
+    bill.PatientId = patientId;
+    bill.Amount = amount;
+    bill.Description = description;
+
+    await _context.SaveChangesAsync();
+
+    TempData["Success"] = "Bill updated successfully!";
+    return RedirectToAction(nameof(AllBills));
+}
+        
+        
+        
+        
         
         // GET: Doctor/AllBills
         public async Task<IActionResult> AllBills()
@@ -243,6 +359,10 @@ namespace ABCClinicSystem.Controllers
         }
         
         
+        
+        
+        
+        
         // POST: Doctor/DeleteBill
         [HttpPost]
         public async Task<IActionResult> DeleteBill(int id)
@@ -254,7 +374,7 @@ namespace ABCClinicSystem.Controllers
             await _context.SaveChangesAsync();
 
             TempData["Success"] = "Bill deleted successfully!";
-            return RedirectToAction(nameof(Dashboard));
+            return RedirectToAction(nameof(AllBills));
         }
     }
 }

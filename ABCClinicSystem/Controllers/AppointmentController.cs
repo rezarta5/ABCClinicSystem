@@ -55,29 +55,26 @@ namespace ABCClinicSystem.Controllers
 
             var appointment = new Appointment
             {
-                // Populate Doctor dropdown
-                Doctors = _context.Users
-                    .Where(u => u.RoleType == "Doctor")
-                    .Select(u => new SelectListItem
-                    {
-                        Value = u.Id, // Must match DoctorId type (string)
-                        Text = u.FullName
-                    })
-                    .ToList(),
+                Doctors = (User.IsInRole("Admin") || User.IsInRole("Patient"))
+                    ? _context.Users
+                        .Where(u => u.RoleType == "Doctor")
+                        .Select(u => new SelectListItem
+                        {
+                            Value = u.Id,
+                            Text = u.FullName
+                        }).ToList()
+                    : null, // Doctors themselves won't see it
 
-                // Populate Patient dropdown
                 Patients = _context.Users
                     .Where(u => u.RoleType == "Patient")
                     .Select(u => new SelectListItem
                     {
-                        Value = u.Id, // Must match PatientId type (string)
+                        Value = u.Id,
                         Text = u.FullName,
-                        Selected = u.Id == currentUserId // Pre-select logged-in patient
-                    })
-                    .ToList(),
-                
-                
-                // AppointmentTypes already have defaults in model constructor
+                        Selected = u.Id == currentUserId
+                    }).ToList(),
+
+                AppointmentDate = DateTime.Now
             };
             
             
@@ -157,11 +154,12 @@ namespace ABCClinicSystem.Controllers
             TempData["Success"] = "Appointment booked successfully!";
 
             // Redirect to proper page
-            if (User.IsInRole("Doctor"))
-                return RedirectToAction("Dashboard", "Doctor");
-            else
-                return RedirectToAction("Index", "Appointment");
+            return RedirectToAction("Index", "Appointment");
         }
+        
+        
+        
+        
         
         // GET: Appointment/GetServicesByDepartment/5
         [HttpGet]
@@ -184,6 +182,8 @@ namespace ABCClinicSystem.Controllers
             var appointment = await _context.Appointments
                 .Include(a => a.Doctor)
                 .Include(a => a.Patient)
+                .Include(a => a.Department)
+                .Include(a => a.Service)
                 .FirstOrDefaultAsync(a => a.Id == id);
 
             if (appointment == null) return NotFound();
@@ -242,74 +242,171 @@ namespace ABCClinicSystem.Controllers
             return View(appointment);
         }
 
-// POST: Appointment/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Appointment model)
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Edit(int id, Appointment model)
+{
+    if (id != model.Id) return NotFound();
+    
+    if (!ModelState.IsValid)
+    {
+        var errors = string.Join("; ", ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage));
+        TempData["Errors"] = errors;
+    }
+
+    var appointment = await _context.Appointments.FindAsync(id);
+    if (appointment == null) return NotFound();
+
+    if (ModelState.IsValid)
+    {
+        var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (User.IsInRole("Patient") && appointment.PatientId == currentUserId)
         {
-            if (id != model.Id) return NotFound();
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    // Fetch the existing appointment
-                    var appointment = await _context.Appointments.FindAsync(id);
-                    if (appointment == null) return NotFound();
-
-                    // Update fields
-                    appointment.DoctorId = model.DoctorId;
-                    appointment.PatientId = model.PatientId;
-                    appointment.AppointmentType = model.AppointmentType;
-                    appointment.Reason = model.Reason;
-                    appointment.Status = model.Status;
-                    
-                    // 🔹 Update Department and Service
-                    appointment.DepartmentId = model.DepartmentId;
-                    appointment.ServiceId = model.ServiceId;
-
-                    // Convert AppointmentDate to UTC
-                    appointment.AppointmentDate = DateTime.SpecifyKind(model.AppointmentDate, DateTimeKind.Utc);
-
-                    await _context.SaveChangesAsync();
-                    TempData["Success"] = "Appointment updated successfully!";
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!_context.Appointments.Any(a => a.Id == id))
-                        return NotFound();
-                    else
-                        throw;
-                }
-            }
-
-            // Repopulate dropdowns if validation fails
-            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-            model.Doctors = _context.Users
-                .Where(u => u.RoleType == "Doctor")
-                .Select(u => new SelectListItem
-                {
-                    Value = u.Id,
-                    Text = u.FullName,
-                    Selected = u.Id == model.DoctorId
-                }).ToList();
-
-            model.Patients = _context.Users
-                .Where(u => u.RoleType == "Patient")
-                .Select(u => new SelectListItem
-                {
-                    Value = u.Id,
-                    Text = u.FullName,
-                    Selected = u.Id == model.PatientId
-                }).ToList();
-
-            foreach (var item in model.AppointmentTypes)
-                item.Selected = item.Value == model.AppointmentType;
-
-            return View(model);
+            // Patients can only edit Date and Reason
+            appointment.AppointmentDate = DateTime.SpecifyKind(model.AppointmentDate, DateTimeKind.Utc);
+            appointment.Reason = model.Reason;
         }
+        else
+        {
+            // Admins/Doctors can edit everything
+            appointment.DoctorId = model.DoctorId;
+            appointment.PatientId = model.PatientId;
+            appointment.DepartmentId = model.DepartmentId;
+            appointment.ServiceId = model.ServiceId;
+            appointment.AppointmentType = model.AppointmentType;
+            appointment.Reason = model.Reason;
+            appointment.Status = model.Status;
+            appointment.AppointmentDate = DateTime.SpecifyKind(model.AppointmentDate, DateTimeKind.Utc);
+        }
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Appointment updated successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!_context.Appointments.Any(a => a.Id == id))
+                return NotFound();
+            else
+                throw;
+        }
+    }
+
+    // 🔹 IMPORTANT: Repopulate navigation properties for the view
+    var appointmentEntity = await _context.Appointments
+        .Include(a => a.Doctor)
+        .Include(a => a.Patient)
+        .Include(a => a.Department)
+        .Include(a => a.Service)
+        .FirstOrDefaultAsync(a => a.Id == model.Id);
+
+    if (appointmentEntity != null)
+    {
+        model.Doctor = appointmentEntity.Doctor;
+        model.Patient = appointmentEntity.Patient;
+        model.Department = appointmentEntity.Department;
+        model.Service = appointmentEntity.Service;
+    }
+
+    // Repopulate dropdowns
+    model.Doctors = _context.Users
+        .Where(u => u.RoleType == "Doctor")
+        .Select(u => new SelectListItem
+        {
+            Value = u.Id,
+            Text = u.FullName,
+            Selected = u.Id == model.DoctorId
+        }).ToList();
+
+    model.Patients = _context.Users
+        .Where(u => u.RoleType == "Patient")
+        .Select(u => new SelectListItem
+        {
+            Value = u.Id,
+            Text = u.FullName,
+            Selected = u.Id == model.PatientId
+        }).ToList();
+
+    model.Departments = _context.ServiceDepartments
+        .Select(d => new SelectListItem
+        {
+            Value = d.Id.ToString(),
+            Text = d.Name,
+            Selected = d.Id == model.DepartmentId
+        }).ToList();
+
+    model.Services = _context.Services
+        .Select(s => new SelectListItem
+        {
+            Value = s.Id.ToString(),
+            Text = s.Name,
+            Selected = s.Id == model.ServiceId
+        }).ToList();
+
+    foreach (var item in model.AppointmentTypes)
+        item.Selected = item.Value == model.AppointmentType;
+
+    return View(model);
+}    
+        
+        
+[HttpPost]
+public async Task<IActionResult> UpdateAppointmentStatus(int id, string status)
+{
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+    Appointment appointment;
+
+    // ✅ PATIENT: only allowed to CANCEL
+    if (User.IsInRole("Patient"))
+    {
+        if (status != "Cancelled")
+        {
+            TempData["Error"] = "You can only cancel appointments.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        appointment = await _context.Appointments
+            .FirstOrDefaultAsync(a => a.Id == id && a.PatientId == currentUserId);
+
+        if (appointment == null) return NotFound();
+
+        appointment.Status = "Cancelled";
+    }
+    // ✅ DOCTOR / ADMIN: full control
+    else if (User.IsInRole("Doctor") || User.IsInRole("Admin"))
+    {
+        appointment = await _context.Appointments
+            .FirstOrDefaultAsync(a => a.Id == id);
+
+        if (appointment == null) return NotFound();
+
+        var validStatuses = new List<string> { "Scheduled", "Completed", "Cancelled" };
+
+        if (!validStatuses.Contains(status))
+        {
+            TempData["Error"] = "Invalid status.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        appointment.Status = status;
+    }
+    else
+    {
+        return Forbid();
+    }
+
+    await _context.SaveChangesAsync();
+
+    TempData["Success"] = "Appointment status updated successfully!";
+    return RedirectToAction(nameof(Index));
+}
+        
 
 
 

@@ -11,32 +11,47 @@
     @Html.AntiForgeryToken()
 
     <!-- Doctor dropdown -->
-    <div class="form-group">
-        <label asp-for="DoctorId" class="form-label"></label>
-        <select asp-for="DoctorId" asp-items="Model.Doctors" class="form-control" required>
-            <option value="">-- Select Doctor --</option>
-        </select>
-        <span asp-validation-for="DoctorId" class="text-danger"></span>
-    </div>
-
-    <!-- Patient dropdown or hidden for Patient role -->
-    <div class="form-group">
-        <label asp-for="PatientId" class="form-label"></label>
-        @if (User.IsInRole("Patient"))
-        {
-            <!-- Patient cannot change this, hidden input -->
-            <input type="hidden" asp-for="PatientId" value="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" />
+    @if (User.IsInRole("Admin") || User.IsInRole("Patient"))
+    {
+        <div class="form-group">
+            <label asp-for="DoctorId" class="form-label"></label>
+            <select asp-for="DoctorId" asp-items="Model.Doctors" class="form-control" required>
+                <option value="">-- Select Doctor --</option>
+            </select>
+            <span asp-validation-for="DoctorId" class="text-danger"></span>
+        </div>
+    }
+    else if (User.IsInRole("Doctor"))
+    {
+        <!-- Doctor cannot change themselves, hidden input -->
+        <input type="hidden" asp-for="DoctorId" value="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" />
+        <div class="form-group">
+            <label class="form-label">Doctor</label>
             <input class="form-control" value="@User.Identity.Name" disabled />
-        }
-        else
-        {
-            <!-- Admin or Doctor can select patient -->
+        </div>
+    }
+
+    <!-- Patient dropdown -->
+    @if (User.IsInRole("Admin") || User.IsInRole("Doctor"))
+    {
+        <div class="form-group">
+            <label asp-for="PatientId" class="form-label"></label>
             <select asp-for="PatientId" asp-items="Model.Patients" class="form-control" required>
                 <option value="">-- Select Patient --</option>
             </select>
-        }
-        <span asp-validation-for="PatientId" class="text-danger"></span>
-    </div>
+            <span asp-validation-for="PatientId" class="text-danger"></span>
+        </div>
+    }
+    else if (User.IsInRole("Patient"))
+    {
+        <input type="hidden" asp-for="PatientId" value="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" />
+        <div class="form-group">
+            <label class="form-label">Patient</label>
+            <input class="form-control" value="@User.Identity.Name" disabled />
+        </div>
+    }
+    
+    
     
     <div class="form-group">
         <label asp-for="DepartmentId"></label>
@@ -49,11 +64,7 @@
         <label asp-for="ServiceId"></label>
         <select asp-for="ServiceId" class="form-control" id="ServiceId">
             <option value="">-- Select Service --</option>
-            @* If you want to pre-fill services of the first department (optional) *@
-            @* @foreach (var service in Model.Services)
-        {
-            <option value="@service.Value">@service.Text</option>
-        } *@
+        
         </select>
     </div>
     

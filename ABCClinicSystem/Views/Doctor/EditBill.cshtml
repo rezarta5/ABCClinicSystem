@@ -1,0 +1,56 @@
+﻿@model ABCClinicSystem.Models.Bill
+
+<h2 class="mb-4 text-primary">Edit Bill</h2>
+
+<form asp-action="EditBill" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="PatientId" class="form-label">Patient</label>
+        <select asp-for="PatientId" class="form-select" asp-items="ViewBag.Patients">
+            <option value="">-- Select Patient --</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Amount" class="form-label">Amount ($)</label>
+        <input asp-for="Amount" type="number" step="0.01" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="DueDate" class="form-label">Due Date</label>
+        <input asp-for="DueDate" type="date" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label">Description</label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Status" class="form-label">Status</label>
+        @{
+            var statuses = new List<string> { "Pending", "Paid", "Cancelled" };
+        }
+        <select asp-for="Status" class="form-select">
+            @foreach (var status in statuses)
+            {
+                if (status == Model.Status)
+                {
+                    <option selected>@status</option>
+                }
+                else
+                {
+                    <option>@status</option>
+                }
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update Bill</button>
+    <a asp-action="AllBills" class="btn btn-secondary ms-2">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

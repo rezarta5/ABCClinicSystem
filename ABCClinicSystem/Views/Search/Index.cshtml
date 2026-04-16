@@ -1,0 +1,85 @@
+﻿<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+function updateTableHead(type) {
+
+    let head = "";
+
+    if (type === "appointments") {
+        head = "<th>Patient</th><th>Doctor</th><th>Date</th><th>Status</th>";
+    }
+    else if (type === "medical") {
+        head = "<th>Patient</th><th>Doctor</th><th>Diagnosis</th><th>Date</th>";
+    }
+    else if (type === "bills") {
+        head = "<th>Doctor</th><th>Description</th><th>Amount</th><th>Status</th>";
+    }
+    else if (type === "doctors") {
+        head = "<th>Name</th><th>Email</th><th>Phone</th><th></th>";
+    }
+    else if (type === "departments") {
+        head = "<th>Name</th><th>Description</th><th>Services</th><th></th>";
+    }
+    else if (type === "services") {
+        head = "<th>Name</th><th>Description</th><th></th><th></th>";
+    }
+
+    $("#tableHead").html(head);
+}
+
+function loadData() {
+
+    let query = $("#searchBox").val();
+    let type = $("#typeFilter").val();
+    let status = $("#statusFilter").val();
+
+    updateTableHead(type);
+
+    $.ajax({
+        url: '/Search/GlobalSearch',
+        type: 'GET',
+        data: { query, type, status },
+
+        success: function (data) {
+
+            let rows = "";
+
+            if (!data || data.length === 0) {
+                rows = "<tr><td colspan='4' class='text-center'>No results found</td></tr>";
+                $("#resultsBody").html(rows);
+                return;
+            }
+
+            data.forEach(item => {
+                rows += `
+                    <tr>
+                        <td>${item.col1 ?? ''}</td>
+                        <td>${item.col2 ?? ''}</td>
+                        <td>${item.col3 ?? ''}</td>
+                        <td>${item.col4 ?? ''}</td>
+                    </tr>
+                `;
+            });
+
+            $("#resultsBody").html(rows);
+        },
+
+        error: function (xhr) {
+            console.log(xhr.responseText);
+            $("#resultsBody").html("<tr><td colspan='4'>Server error</td></tr>");
+        }
+    });
+}
+
+// LIVE SEARCH (with slight optimization)
+let timer;
+$("#searchBox").on("keyup", function () {
+    clearTimeout(timer);
+    timer = setTimeout(loadData, 300);
+});
+
+$("#typeFilter, #statusFilter").on("change", loadData);
+
+// INITIAL LOAD
+loadData();
+</script>
