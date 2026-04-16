@@ -13,6 +13,18 @@
       "PackagePath": "staticwebassets\\favicon.ico"
     },
     {
+      "Id": "C:\\Users\\Public\\ABCClinicSystem\\ABCClinicSystem\\wwwroot\\images\\clinic1.jpg",
+      "PackagePath": "staticwebassets\\images\\clinic1.jpg"
+    },
+    {
+      "Id": "C:\\Users\\Public\\ABCClinicSystem\\ABCClinicSystem\\wwwroot\\images\\clinic2.jpg",
+      "PackagePath": "staticwebassets\\images\\clinic2.jpg"
+    },
+    {
+      "Id": "C:\\Users\\Public\\ABCClinicSystem\\ABCClinicSystem\\wwwroot\\images\\clinic3.jpg",
+      "PackagePath": "staticwebassets\\images\\clinic3.jpg"
+    },
+    {
       "Id": "C:\\Users\\Public\\ABCClinicSystem\\ABCClinicSystem\\wwwroot\\js\\site.js",
       "PackagePath": "staticwebassets\\js\\site.js"
     },
